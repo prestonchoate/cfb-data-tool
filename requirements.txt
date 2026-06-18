@@ -1,0 +1,19 @@
+# --- Core engine (Phase 1) ---
+# OCR: ONNX-based, no PyTorch (keeps install ~250MB vs ~2GB for EasyOCR)
+rapidocr-onnxruntime
+opencv-python
+numpy
+
+# Screen capture & global hotkey (used from Phase 2 onward)
+mss
+keyboard
+
+# OS-appropriate config/data directories
+platformdirs
+
+# --- UI (Phase 2+) ---
+PySide6
+
+# --- Optional: Google Sheets export ---
+gspread
+oauth2client

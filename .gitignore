@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- cfb-data-tool ---
+# Local test screenshots (large; full corpus lives outside the repo, see tests/)
+tests/fixtures/screenshots/
+tests/reports/
+# Scraped output / local DB
+*.db
+recruits_scraped.csv
+# Google Sheets credentials
+creds.json

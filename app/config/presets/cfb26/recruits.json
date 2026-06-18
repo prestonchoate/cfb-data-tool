@@ -1,0 +1,19 @@
+{
+  "game_version": "cfb26",
+  "profile": "recruits",
+  "base_resolution": [2560, 1440],
+  "global_offsets": { "top": 370, "left": 1207, "width": 2400, "height": 1440 },
+  "rois": {
+    "gem_icon":      [287, 90, 13, 90],
+    "attributes":    [530, 730, 660, 800],
+    "height_weight": [15, 120, 2060, 300],
+    "hometown":      [135, 110, 1710, 685],
+    "archetype":     [130, 120, 1400, 300],
+    "recruit_class": [30, 110, 1710, 340],
+    "position":      [15, 120, 1400, 200],
+    "name":          [15, 160, 590, 805],
+    "star_rating":   [175, 50, 615, 240],
+    "basic_info":    [15, 240, 590, 1770],
+    "dev_trait":     [1110, 75, 1760, 520]
+  }
+}
