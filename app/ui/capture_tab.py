@@ -99,8 +99,10 @@ class CaptureTab(QWidget):
 
         root.addLayout(left, 1)
 
-        # Right: result card
-        self.result_card = ResultCard(self.settings.confidence_threshold)
+        # Right: result card (editable, for inline correction)
+        self.result_card = ResultCard(
+            self.settings.confidence_threshold, get_profile(self.settings.profile))
+        self.result_card.changed.connect(lambda: self.save_btn.setEnabled(True))
         root.addWidget(self.result_card, 1)
 
     def _set_status(self, text: str):
@@ -214,9 +216,10 @@ class CaptureTab(QWidget):
         if not self.last_result:
             return
         profile = get_profile(self.settings.profile)
-        action = self.store.upsert(profile.to_row(self.last_result.record))
+        record = self.result_card.edited_record()  # includes any inline corrections
+        action = self.store.upsert(profile.to_row(record))
         self.save_btn.setEnabled(False)
-        name = self.last_result.record.get("NAME", "recruit")
+        name = record.get("NAME", "recruit")
         self._set_status(f"{action.capitalize()} {name} in the collection.")
         self.recruit_saved.emit()
 

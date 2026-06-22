@@ -91,12 +91,25 @@ def main() -> int:
         print(f"FAIL: expected a valid scan, missing={result.missing}")
         return 1
 
+    # Inline correction: the editable result card is what gets saved.
+    from PySide6.QtWidgets import QComboBox, QLineEdit, QSpinBox
+    rc = cap.result_card
+    assert isinstance(rc._field_widgets["WEIGHT"], QLineEdit), "WEIGHT not editable"
+    assert isinstance(rc._field_widgets["STARS"], QSpinBox), "STARS not a spinbox"
+    assert isinstance(rc._field_widgets["GEM"], QComboBox), "GEM not a combo"
+    rc._on_edit("WEIGHT", "999")  # simulate fixing a misread
+    assert rc.edited_record()["WEIGHT"] == "999"
+    print("• inline correction applied: WEIGHT -> 999")
+
     cap.save_current()
     if window.store.count() != 1:
         print(f"FAIL: store has {window.store.count()} rows, expected 1")
         return 1
     saved = window.store.all()[0]
-    print(f"• saved to store: {saved['name']} {saved['position']} ({window.store.count()} row)")
+    if saved["weight"] != "999":
+        print(f"FAIL: corrected value not saved (weight={saved['weight']})")
+        return 1
+    print(f"• saved corrected record: {saved['name']} {saved['position']} weight={saved['weight']}")
 
     window.close()
     print("\nPASS: UI smoke test succeeded")
