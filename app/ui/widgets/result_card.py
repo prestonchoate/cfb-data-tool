@@ -71,7 +71,11 @@ class ResultCard(QWidget):
 
     # ---- public API ------------------------------------------------------
     def show_result(self, result):
-        self._record = copy.deepcopy(result.record)
+        self.show_record(result.record)
+
+    def show_record(self, record):
+        """Display a plain record (used for reviewing a queued auto-capture)."""
+        self._record = copy.deepcopy(record)
         self._field_widgets.clear()
         self._attr_widgets.clear()
         self._build_basics()
