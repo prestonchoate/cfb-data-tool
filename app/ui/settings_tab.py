@@ -9,9 +9,12 @@ users never touch a .py file.
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
+    QCheckBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget,
 )
+
+from .widgets.hotkey_edit import HotkeyEdit
+from .widgets.sound_picker import SoundPicker
 
 
 class SettingsTab(QWidget):
@@ -25,23 +28,18 @@ class SettingsTab(QWidget):
 
         # (Game monitor lives in the Calibrate tab, where you capture it.)
 
-        # Output target + CSV path
-        self.target = QComboBox()
-        self.target.addItems(["csv", "sqlite"])
-        self.target.setCurrentText(settings.output_target)
-        form.addRow("Save to:", self.target)
-
+        # Scans always go into the SQLite collection (Data tab). This sets the
+        # default location for CSV exports from there.
         path_row = QHBoxLayout()
         self.csv_path = QLineEdit(settings.output_csv_path)
         browse = QPushButton("Browse…")
         browse.clicked.connect(self._browse_csv)
         path_row.addWidget(self.csv_path)
         path_row.addWidget(browse)
-        form.addRow("CSV file:", path_row)
+        form.addRow("Default export CSV:", path_row)
 
-        # Hotkey
-        self.hotkey = QLineEdit(settings.hotkey)
-        self.hotkey.setMaxLength(20)
+        # Hotkey — click and press a key to capture it
+        self.hotkey = HotkeyEdit(settings.hotkey)
         form.addRow("Scan hotkey:", self.hotkey)
 
         # Confidence threshold
@@ -51,10 +49,17 @@ class SettingsTab(QWidget):
         self.threshold.setValue(settings.confidence_threshold)
         form.addRow("Flag fields below confidence:", self.threshold)
 
-        # Toggles
+        # Sounds
         self.sounds = QCheckBox("Play success/fail sounds")
         self.sounds.setChecked(settings.use_sounds)
+        self.sounds.toggled.connect(self._on_sounds_toggled)
         form.addRow(self.sounds)
+
+        self.success_picker = SoundPicker(settings.success_sound)
+        form.addRow("Success sound:", self.success_picker)
+        self.fail_picker = SoundPicker(settings.fail_sound)
+        form.addRow("Fail sound:", self.fail_picker)
+        self._on_sounds_toggled(settings.use_sounds)
 
         self.auto_save = QCheckBox("Auto-save valid scans")
         self.auto_save.setChecked(settings.auto_save_valid)
@@ -77,13 +82,18 @@ class SettingsTab(QWidget):
         if path:
             self.csv_path.setText(path)
 
+    def _on_sounds_toggled(self, on: bool):
+        self.success_picker.setEnabled(on)
+        self.fail_picker.setEnabled(on)
+
     def _save(self):
         s = self.settings
-        s.output_target = self.target.currentText()
         s.output_csv_path = self.csv_path.text()
         s.hotkey = self.hotkey.text().strip() or "s"
         s.confidence_threshold = round(self.threshold.value(), 2)
         s.use_sounds = self.sounds.isChecked()
+        s.success_sound = self.success_picker.value()
+        s.fail_sound = self.fail_picker.value()
         s.auto_save_valid = self.auto_save.isChecked()
         s.save()
-        self.note.setText("Saved. (Hotkey/monitor changes apply after restart.)")
+        self.note.setText("Saved. (Hotkey changes apply after restart.)")

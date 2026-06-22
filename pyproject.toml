@@ -21,7 +21,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-sheets = ["gspread", "oauth2client"]
 dev = ["pytest"]
 
 [project.scripts]

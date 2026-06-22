@@ -224,5 +224,3 @@ tests/reports/
 # Scraped output / local DB
 *.db
 recruits_scraped.csv
-# Google Sheets credentials
-creds.json

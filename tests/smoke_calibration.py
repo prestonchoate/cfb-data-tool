@@ -65,6 +65,7 @@ def main() -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     settings = Settings()
     settings.use_sounds = False
+    settings.sqlite_path = str(_tmp / "data.db")
     window = MainWindow(settings)
     window.show()
     ctab = window.calibration_tab

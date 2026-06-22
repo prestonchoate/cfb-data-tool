@@ -9,7 +9,7 @@ This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patch
 ## Planned features
 
 - **Visual ROI editor + auto-calibration** — drag/resize the capture regions over a live screenshot; auto-scale to any resolution (no more hand-editing pixel offsets).
-- **Built-in data viewer/export** — sortable, filterable, de-duplicated table; export to CSV / Google Sheets / SQLite.
+- **Built-in data viewer/export** — sortable, filterable, de-duplicated table backed by SQLite; export to CSV (import into your spreadsheet of choice).
 - **Live OCR confidence + inline correction** — low-confidence fields are flagged so you can fix a misread before saving.
 - **Auto-capture / batch mode** — optionally detect new cards and queue them for review.
 - **One-click install** — packaged Windows installer (PyInstaller + Inno Setup); macOS/Linux later.
@@ -22,7 +22,7 @@ app/core/processor   star count (template match) + gem/bust (HSV) — CV, not OC
 app/core/profiles/   ScrapeProfile interface + registry; recruits is profile #1
 app/core/calibration ROI presets keyed by (game_version, profile); resolution scaling
 app/core/engine      scan(image) -> ScanResult  (produces results; never saves)
-app/io/              CSV / SQLite / Sheets outputs
+app/io/              SQLite record store + CSV export
 app/config/presets/  JSON ROI presets (e.g. cfb26/recruits.json)
 ```
 

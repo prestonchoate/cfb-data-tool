@@ -13,7 +13,3 @@ platformdirs
 
 # --- UI (Phase 2+) ---
 PySide6
-
-# --- Optional: Google Sheets export ---
-gspread
-oauth2client

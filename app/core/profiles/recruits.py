@@ -17,7 +17,7 @@ from .base import ScrapeProfile, register_profile
 
 logger = logging.getLogger(__name__)
 
-# --- Output schema (column order for CSV/Sheets/SQLite) ---
+# --- Output schema (column order for CSV/SQLite) ---
 BASIC_INFO_HEADERS = [
     "NAME", "POSITION", "ARCHETYPE", "STARS", "GEM",
     "HEIGHT", "WEIGHT", "CLASS", "HOMETOWN", "DEV TRAIT",
@@ -303,6 +303,10 @@ class RecruitsProfile(ScrapeProfile):
     @property
     def schema(self):
         return BASIC_INFO_HEADERS + ATTRIBUTE_HEADERS
+
+    @property
+    def dedupe_keys(self):
+        return ["NAME", "POSITION"]
 
     def extract(self, img, rois, ocr) -> dict:
         conf = {}

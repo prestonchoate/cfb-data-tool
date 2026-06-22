@@ -8,10 +8,12 @@ threshold); the Settings tab grows alongside later phases.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from platformdirs import user_config_dir, user_data_dir
+
+from ..core.sound import default_fail, default_success, is_wav_path
 
 APP_NAME = "cfb-data-tool"
 CONFIG_DIR = Path(user_config_dir(APP_NAME, appauthor=False))
@@ -24,11 +26,12 @@ class Settings:
     game_version: str = "cfb26"
     profile: str = "recruits"
     monitor_number: int = 1
-    output_target: str = "csv"  # csv | sqlite | sheets
     output_csv_path: str = str(DATA_DIR / "recruits_scraped.csv")
     sqlite_path: str = str(DATA_DIR / "cfb_data.db")
     hotkey: str = "s"
     use_sounds: bool = True
+    success_sound: str = field(default_factory=default_success)  # .wav path
+    fail_sound: str = field(default_factory=default_fail)
     auto_save_valid: bool = False           # save valid scans without review
     confidence_threshold: float = 0.80      # below this a field is flagged
 
@@ -42,7 +45,13 @@ class Settings:
             try:
                 data = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
                 known = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
-                return cls(**known)
+                s = cls(**known)
+                # Migrate old system-alias sounds to real .wav files.
+                if not is_wav_path(s.success_sound):
+                    s.success_sound = default_success()
+                if not is_wav_path(s.fail_sound):
+                    s.fail_sound = default_fail()
+                return s
             except (json.JSONDecodeError, TypeError):
                 pass
         return cls()

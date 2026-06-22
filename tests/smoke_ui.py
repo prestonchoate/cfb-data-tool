@@ -53,6 +53,13 @@ def main() -> int:
     settings = Settings()
     settings.use_sounds = False
     settings.output_csv_path = os.path.join(tmp, "out.csv")
+    settings.sqlite_path = os.path.join(tmp, "data.db")
+
+    # Isolate from any real saved calibration and force the base 1440p resolution
+    # so the bundled ROIs line up with the 2400x1440 fixture crop.
+    import app.core.calibration as cal
+    cal.USER_PRESETS_DIR = Path(tmp) / "presets"
+    cal.detect_resolution = lambda *a, **k: (2560, 1440)
 
     app = QApplication.instance() or QApplication(sys.argv)
     window = MainWindow(settings)
@@ -85,15 +92,11 @@ def main() -> int:
         return 1
 
     cap.save_current()
-    csv_path = Path(settings.output_csv_path)
-    if not csv_path.exists():
-        print("FAIL: CSV not written")
+    if window.store.count() != 1:
+        print(f"FAIL: store has {window.store.count()} rows, expected 1")
         return 1
-    lines = csv_path.read_text(encoding="utf-8").strip().splitlines()
-    if len(lines) < 2:
-        print(f"FAIL: CSV has no data row ({len(lines)} lines)")
-        return 1
-    print(f"• saved CSV: {len(lines[0].split(','))} cols, {len(lines) - 1} data row(s)")
+    saved = window.store.all()[0]
+    print(f"• saved to store: {saved['name']} {saved['position']} ({window.store.count()} row)")
 
     window.close()
     print("\nPASS: UI smoke test succeeded")

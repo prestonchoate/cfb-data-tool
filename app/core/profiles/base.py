@@ -45,7 +45,13 @@ class ScrapeProfile(ABC):
     @property
     @abstractmethod
     def schema(self) -> list[str]:
-        """Ordered output column headers for CSV/Sheets/SQLite."""
+        """Ordered output column headers for CSV/SQLite."""
+
+    @property
+    def dedupe_keys(self) -> list[str]:
+        """Schema columns that uniquely identify a record (for de-duplication).
+        Defaults to the first column; profiles override as needed."""
+        return self.schema[:1]
 
     @abstractmethod
     def extract(self, img, rois: dict, ocr) -> dict:

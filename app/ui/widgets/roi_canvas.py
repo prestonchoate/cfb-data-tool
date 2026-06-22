@@ -116,6 +116,11 @@ class RoiItem(QGraphicsRectItem):
         super().hoverMoveEvent(event)
 
     def mousePressEvent(self, event):
+        # Single-select: clicking a box deselects the others. Overriding the
+        # default press handler skipped Qt's exclusive-selection behaviour, so
+        # selections accumulated and overlapping handles fought each other.
+        if self.scene():
+            self.scene().clearSelection()
         self.setSelected(True)
         self._drag = self._handle_at(event.pos()) or "body"
         self._start_rect = QRectF(self.rect())

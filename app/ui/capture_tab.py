@@ -21,7 +21,7 @@ import cv2
 from ..core import capture
 from ..core.calibration import resolve_calibration
 from ..core.profiles.base import get_profile
-from ..io.output_csv import CSVManager
+from ..core.sound import play_sound
 from .hotkey import HotkeyManager
 from .widgets.image_view import bgr_to_qpixmap
 from .widgets.result_card import ResultCard
@@ -32,10 +32,12 @@ logger = logging.getLogger(__name__)
 
 class CaptureTab(QWidget):
     engine_ready = Signal(object)  # emits the Engine once OCR is initialized
+    recruit_saved = Signal()       # emits after a scan is saved to the store
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, store, parent=None):
         super().__init__(parent)
         self.settings = settings
+        self.store = store
         self.calib = resolve_calibration(
             settings.game_version, settings.profile, settings.monitor_number)
         self.engine = None
@@ -205,22 +207,18 @@ class CaptureTab(QWidget):
     def _beep(self, success: bool):
         if not self.settings.use_sounds:
             return
-        try:
-            import winsound
-            winsound.Beep(1000 if success else 400, 150 if success else 400)
-        except Exception:  # noqa: BLE001  (non-Windows or no audio)
-            pass
+        play_sound(self.settings.success_sound if success else self.settings.fail_sound)
 
     # ---- Save ------------------------------------------------------------
     def save_current(self):
         if not self.last_result:
             return
-        self.settings.ensure_data_dir()
         profile = get_profile(self.settings.profile)
-        mgr = CSVManager(self.settings.output_csv_path, profile.schema)
-        mgr.save_row(profile.to_row(self.last_result.record))
+        action = self.store.upsert(profile.to_row(self.last_result.record))
         self.save_btn.setEnabled(False)
-        self._set_status(f"Saved to {self.settings.output_csv_path}")
+        name = self.last_result.record.get("NAME", "recruit")
+        self._set_status(f"{action.capitalize()} {name} in the collection.")
+        self.recruit_saved.emit()
 
     # ---- Lifecycle -------------------------------------------------------
     def shutdown(self):
