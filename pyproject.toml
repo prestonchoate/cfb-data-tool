@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "pyinstaller", "pillow"]
 
 [project.scripts]
 cfb-data-tool = "app.main:main"

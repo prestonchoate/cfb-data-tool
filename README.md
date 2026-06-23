@@ -4,9 +4,9 @@ A friendly **desktop app** for capturing College Football data from your screen 
 
 This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patches822/cf26-recruit-scraper) CLI, rebuilt for non-technical users.
 
-> **Status:** 🚧 Early development. The capture **engine** (Phase 1) is in place — OCR/CV extraction, the profile system, calibration presets, and a headless accuracy harness. The PySide6 UI is next. See [docs/cfb-data-tool-plan.md](../cf26-recruit-scraper/docs/cfb-data-tool-plan.md) in the original repo for the full plan.
+> **Status:** ✅ Feature-complete (v0.1). Engine, UI, calibration editor, data viewer, inline correction, auto-capture, and a Windows installer are all in place. New users should start with [QUICKSTART.md](QUICKSTART.md).
 
-## Planned features
+## Features
 
 - **Visual ROI editor + auto-calibration** — drag/resize the capture regions over a live screenshot; auto-scale to any resolution (no more hand-editing pixel offsets).
 - **Built-in data viewer/export** — sortable, filterable, de-duplicated table backed by SQLite; export to CSV (import into your spreadsheet of choice).
@@ -16,19 +16,24 @@ This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patch
 
 ## Architecture
 
-```
-app/core/ocr/        OCR behind an interface (RapidOCR/ONNX backend)
-app/core/processor   star count (template match) + gem/bust (HSV) — CV, not OCR
-app/core/profiles/   ScrapeProfile interface + registry; recruits is profile #1
-app/core/calibration ROI presets keyed by (game_version, profile); resolution scaling
-app/core/engine      scan(image) -> ScanResult  (produces results; never saves)
-app/io/              SQLite record store + CSV export
-app/config/presets/  JSON ROI presets (e.g. cfb26/recruits.json)
+```txt
+app/ui/                PySide6 desktop UI (Capture, Calibrate, Data, Settings tabs)
+app/core/ocr/          OCR behind an interface (RapidOCR/ONNX backend)
+app/core/processor.py  star count (template match) + gem/bust (HSV) — CV, not OCR
+app/core/profiles/     ScrapeProfile interface + registry; recruits is profile #1
+app/core/calibration.py ROI presets keyed by (game_version, profile); resolution scaling
+app/core/engine.py     scan(image) -> ScanResult  (produces results; never saves)
+app/core/capture.py    screen capture via mss (BGR numpy arrays)
+app/core/sound.py      sound playback (.wav success/fail feedback)
+app/io/                SQLite record store + CSV export
+app/config/presets/    JSON ROI presets (e.g. cfb26/recruits.json)
 ```
 
 OCR was switched from EasyOCR to **RapidOCR (ONNX)** to drop the PyTorch dependency, shrinking the install from ~2 GB to ~250 MB and removing the GPU requirement.
 
 ## Developer setup
+
+Requires **Python 3.10+**.
 
 ```bash
 python -m venv .venv
@@ -54,6 +59,30 @@ It prints a per-image pass/fail table plus a per-field failure breakdown, and wr
 ```bash
 python tests/debug_ocr.py path/to/screenshot.png
 ```
+
+## Building the Windows installer
+
+End users get a double-click installer — no Python required. To build it:
+
+```powershell
+pip install pyinstaller          # in the venv
+powershell -File packaging\build.ps1
+```
+
+This runs PyInstaller (`packaging/cfbdatatool.spec`) to produce a one-folder bundle at
+`dist\CFBDataTool\` (~320 MB — RapidOCR/ONNX keeps it far smaller than a PyTorch build),
+then, if [Inno Setup 6](https://jrsoftware.org/isdl.php) is installed, packages it into
+`dist\installer\CFBDataTool-Setup.exe` (no-admin, per-user install with Start Menu +
+desktop shortcuts).
+
+Verify a bundle without launching the UI:
+
+```powershell
+$env:CFB_SMOKE = "1"; .\dist\CFBDataTool\CFBDataTool.exe
+Get-Content .\dist\CFBDataTool\smoke_result.txt   # should say "SMOKE OK"
+```
+
+End-user instructions live in [QUICKSTART.md](QUICKSTART.md). Release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
