@@ -30,13 +30,14 @@ class ScanResult:
 class Engine:
     """Capture-agnostic: give it a BGR image, get a ScanResult."""
 
-    def __init__(self, ocr, profile: ScrapeProfile, rois: dict):
+    def __init__(self, ocr, profile: ScrapeProfile, rois: dict, scale: float = 1.0):
         self.ocr = ocr
         self.profile = profile
         self.rois = rois
+        self.scale = scale
 
     def scan(self, img) -> ScanResult:
-        record = self.profile.extract(img, self.rois, self.ocr)
+        record = self.profile.extract(img, self.rois, self.ocr, scale=self.scale)
         valid, missing = self.profile.validate(record)
         return ScanResult(record=record, valid=valid, missing=missing,
                           profile_key=self.profile.key)

@@ -34,6 +34,7 @@ class EngineInitWorker(QThread):
                 RapidOcrEngine(),
                 get_profile(self.settings.profile),
                 calib["rois"],
+                scale=calib.get("cv_scale", 1.0),
             )
             self.ready.emit(engine)
         except Exception as exc:  # noqa: BLE001 — surface any init failure to the UI

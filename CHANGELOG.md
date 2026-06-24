@@ -2,6 +2,19 @@
 
 All notable changes to CFB Data Tool are documented here.
 
+## [0.1.1] — 2026-06-24
+
+### Added
+
+- **Update checker** — checks GitHub Releases on launch and shows a banner when a newer version is available.
+
+### Fixed
+
+- **Scan crash at non-base resolutions** — the star-rating template (captured at 1440p) is now scaled to match the user's actual resolution, fixing a `matchTemplate` assertion failure when the capture region was smaller than the template.
+- **Window expanding to full screen width on scan** — the result card is now scrollable, so populating scan results no longer forces the window wider (fixes capture-card setups where the scraper shares screen space with a capture utility).
+
+---
+
 ## [0.1.0] — 2026-06-23
 
 First public release. Feature-complete desktop app for capturing recruit cards.

@@ -268,8 +268,8 @@ def extract_attributes(ocr, img, rois):
     return attrs, _mean_conf(confs)
 
 
-def extract_star_rating(img, rois):
-    return processor.get_star_rating(_crop(img, rois["star_rating"]))
+def extract_star_rating(img, rois, scale: float = 1.0):
+    return processor.get_star_rating(_crop(img, rois["star_rating"]), scale=scale)
 
 
 def extract_gem_status(img, rois):
@@ -308,7 +308,7 @@ class RecruitsProfile(ScrapeProfile):
     def dedupe_keys(self):
         return ["NAME", "POSITION"]
 
-    def extract(self, img, rois, ocr) -> dict:
+    def extract(self, img, rois, ocr, *, scale: float = 1.0) -> dict:
         conf = {}
         name, conf["NAME"] = extract_name(ocr, img, rois)
         position, conf["POSITION"] = extract_position(ocr, img, rois)
@@ -324,7 +324,7 @@ class RecruitsProfile(ScrapeProfile):
             "NAME": name,
             "POSITION": position,
             "ARCHETYPE": archetype,
-            "STARS": extract_star_rating(img, rois),
+            "STARS": extract_star_rating(img, rois, scale=scale),
             "GEM": extract_gem_status(img, rois),
             "HEIGHT": height,
             "WEIGHT": weight,

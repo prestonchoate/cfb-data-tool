@@ -174,6 +174,7 @@ class CaptureTab(QWidget):
         self.calib = calib
         if self.engine is not None:
             self.engine.rois = calib["rois"]
+            self.engine.scale = calib.get("cv_scale", 1.0)
         self._set_status("Calibration updated.")
 
     # ---- Capture / preview ----------------------------------------------
