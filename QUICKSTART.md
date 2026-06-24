@@ -49,7 +49,9 @@ The **Data** tab is your collection — sortable and filterable. Re-scanning a r
 
 - Type in the filter box to find recruits.
 - Click a column header to sort.
-- **Export CSV…** to open your recruits in Excel or Google Sheets.
+- **Export CSV…** to open your recruits in Excel or Google Sheets. 
+
+![data](docs/img/data.png)
 
 ---
 
@@ -60,6 +62,8 @@ The **Data** tab is your collection — sortable and filterable. Re-scanning a r
 - **Flag fields below confidence** — OCR fields scoring below this threshold (default 0.80) are highlighted for review.
 - **Success / fail sounds** — pick any Windows sound (or your own `.wav`), with a ▶ preview.
 - **Auto-save valid scans** — save good manual scans without clicking Save.
+
+![settings](docs/img/settings.png)
 
 ---
 
