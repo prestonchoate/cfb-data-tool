@@ -4,7 +4,7 @@ A friendly **desktop app** for capturing College Football data from your screen 
 
 This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patches822/cf26-recruit-scraper) CLI, rebuilt for non-technical users.
 
-> **Status:** ✅ Feature-complete (v0.1). Engine, UI, calibration editor, data viewer, inline correction, auto-capture, and installers for Windows and macOS are all in place. New users should start with [QUICKSTART.md](QUICKSTART.md).
+> **Status:** ✅ Feature-complete (v0.1.1). Engine, UI, calibration editor, data viewer, inline correction, auto-capture, and installers for Windows and macOS are all in place. New users should start with [QUICKSTART.md](QUICKSTART.md).
 
 ## Features
 

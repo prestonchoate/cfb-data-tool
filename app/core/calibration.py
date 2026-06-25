@@ -120,12 +120,16 @@ def resolve_calibration(game_version: str = "cfb26", profile: str = "recruits",
     base_res = tuple(base["base_resolution"])
     target = tuple(resolution) if resolution else (detect_resolution(monitor_number) or base_res)
 
+    fx, fy = target[0] / base_res[0], target[1] / base_res[1]
+    cv_scale = min(fx, fy)
+
     user = load_user_calibration(game_version, profile, target)
     if user:
         return {
             "global_offsets": user["global_offsets"],
             "rois": user["rois"],
             "resolution": target,
+            "cv_scale": cv_scale,
             "source": "user",
         }
 
@@ -134,6 +138,7 @@ def resolve_calibration(game_version: str = "cfb26", profile: str = "recruits",
             "global_offsets": scale_offsets(base["global_offsets"], base_res, target),
             "rois": scale_rois(base["rois"], base_res, target),
             "resolution": target,
+            "cv_scale": cv_scale,
             "source": "scaled",
         }
 
@@ -141,5 +146,6 @@ def resolve_calibration(game_version: str = "cfb26", profile: str = "recruits",
         "global_offsets": base["global_offsets"],
         "rois": base["rois"],
         "resolution": base_res,
+        "cv_scale": 1.0,
         "source": "base",
     }

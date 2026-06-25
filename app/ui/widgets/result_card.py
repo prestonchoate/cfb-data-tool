@@ -13,8 +13,8 @@ import copy
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QGridLayout, QGroupBox, QLabel, QLineEdit, QSpinBox, QVBoxLayout,
-    QWidget,
+    QComboBox, QGridLayout, QGroupBox, QLabel, QLineEdit, QScrollArea,
+    QSpinBox, QVBoxLayout, QWidget,
 )
 
 from ...core.profiles.recruits import BASIC_INFO_HEADERS
@@ -46,7 +46,15 @@ class ResultCard(QWidget):
         self._field_widgets: dict = {}
         self._attr_widgets: dict = {}
 
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.NoFrame)
+
+        inner = QWidget()
+        root = QVBoxLayout(inner)
 
         self.status = QLabel("No scan yet")
         self.status.setAlignment(Qt.AlignCenter)
@@ -68,6 +76,9 @@ class ResultCard(QWidget):
         root.addWidget(attrs_box)
 
         root.addStretch(1)
+
+        scroll.setWidget(inner)
+        outer.addWidget(scroll)
 
     # ---- public API ------------------------------------------------------
     def show_result(self, result):

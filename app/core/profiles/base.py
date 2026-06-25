@@ -54,10 +54,11 @@ class ScrapeProfile(ABC):
         return self.schema[:1]
 
     @abstractmethod
-    def extract(self, img, rois: dict, ocr) -> dict:
+    def extract(self, img, rois: dict, ocr, *, scale: float = 1.0) -> dict:
         """Extract a record (dict of field -> value) from a BGR image.
 
         ``rois`` maps roi key -> (y, h, x, w) crop relative to ``img``.
+        ``scale`` is the resolution ratio (target / base) for scaling CV templates.
         """
 
     @abstractmethod
