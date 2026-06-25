@@ -158,7 +158,15 @@ class CaptureTab(QWidget):
     # ---- Engine init -----------------------------------------------------
     def _init_engine(self):
         self._set_status("Initializing OCR engine…")
-        self._init_worker = EngineInitWorker(self.settings)
+        # Create the OCR backend on the main thread — onnxruntime deadlocks
+        # when initialized from a background thread on macOS.
+        from ..core.ocr.rapidocr_engine import RapidOcrEngine
+        try:
+            ocr = RapidOcrEngine()
+        except Exception as exc:  # noqa: BLE001
+            self._set_status(f"OCR init failed: {exc}")
+            return
+        self._init_worker = EngineInitWorker(self.settings, ocr=ocr)
         self._init_worker.ready.connect(self._on_engine_ready)
         self._init_worker.failed.connect(lambda e: self._set_status(f"OCR init failed: {e}"))
         self._init_worker.start()

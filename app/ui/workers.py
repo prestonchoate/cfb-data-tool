@@ -16,22 +16,32 @@ from ..core.profiles.base import get_profile
 
 
 class EngineInitWorker(QThread):
+    """Build the Engine in a background thread.
+
+    On macOS, onnxruntime can deadlock when initialized off the main thread,
+    so the caller should create the OcrEngine on the main thread and pass it
+    in via *ocr*.
+    """
     ready = Signal(object)   # Engine
     failed = Signal(str)
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, ocr=None, parent=None):
         super().__init__(parent)
         self.settings = settings
+        self._ocr = ocr
 
     def run(self):
         try:
-            from ..core.ocr.rapidocr_engine import RapidOcrEngine
+            ocr = self._ocr
+            if ocr is None:
+                from ..core.ocr.rapidocr_engine import RapidOcrEngine
+                ocr = RapidOcrEngine()
 
             calib = resolve_calibration(
                 self.settings.game_version, self.settings.profile,
                 self.settings.monitor_number)
             engine = Engine(
-                RapidOcrEngine(),
+                ocr,
                 get_profile(self.settings.profile),
                 calib["rois"],
                 scale=calib.get("cv_scale", 1.0),
