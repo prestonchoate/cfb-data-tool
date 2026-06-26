@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cfb-data-tool"
-version = "0.1.1"
+version = "0.1.2"
 description = "Desktop tool to capture College Football data (recruits and more) from your screen via OCR + computer vision."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 authors = [{ name = "Tyler Patchoski" }]
 dependencies = [
-    "rapidocr-onnxruntime",
+    "rapidocr-onnxruntime>=1.4",
     "opencv-python",
     "numpy",
     "mss",

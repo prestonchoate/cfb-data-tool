@@ -15,6 +15,10 @@ MANIFEST
 *.spec
 !packaging/*.spec
 
+# Generated platform icons (rebuilt by packaging/gen_icons.py)
+packaging/icon.icns
+packaging/icon.ico
+
 # Virtual environments
 .venv/
 venv/

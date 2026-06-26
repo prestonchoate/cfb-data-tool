@@ -1,12 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec for CFB Data Tool (one-folder Windows build).
+# PyInstaller spec for CFB Data Tool (cross-platform).
 #   pyinstaller --noconfirm --clean packaging/cfbdatatool.spec
-# Output: dist/CFBDataTool/CFBDataTool.exe
+# Output:
+#   Windows: dist/CFBDataTool/CFBDataTool.exe  (one-folder)
+#   macOS:   dist/CFBDataTool.app              (.app bundle)
 import os
+import sys
 
 from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
 
 ROOT = os.path.dirname(SPECPATH)  # repo root (SPECPATH = packaging/)
+IS_MAC = sys.platform == "darwin"
 
 datas, binaries, hiddenimports = [], [], []
 
@@ -39,25 +43,51 @@ pyz = PYZ(a.pure)
 # Console window only when CFB_BUILD_CONSOLE=1 (handy for debugging a build).
 console = os.environ.get("CFB_BUILD_CONSOLE") == "1"
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name="CFBDataTool",
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=False,
-    console=console,
-    icon=os.path.join(SPECPATH, "icon.ico"),
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=False,
-    name="CFBDataTool",
-)
+if IS_MAC:
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name="CFBDataTool",
+        debug=False,
+        strip=False,
+        upx=False,
+        console=console,
+    )
+    app = BUNDLE(
+        exe,
+        a.binaries,
+        a.datas,
+        name="CFBDataTool.app",
+        icon=os.path.join(SPECPATH, "icon.icns"),
+        bundle_identifier="com.cfbdatatool.app",
+        info_plist={
+            "CFBundleShortVersionString": "0.1.2",
+            "CFBundleName": "CFB Data Tool",
+            "NSHighResolutionCapable": True,
+            "LSMinimumSystemVersion": "11.0",
+        },
+    )
+else:
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name="CFBDataTool",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        console=console,
+        icon=os.path.join(SPECPATH, "icon.ico"),
+    )
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=False,
+        name="CFBDataTool",
+    )

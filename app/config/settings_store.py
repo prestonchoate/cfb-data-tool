@@ -13,7 +13,7 @@ from pathlib import Path
 
 from platformdirs import user_config_dir, user_data_dir
 
-from ..core.sound import default_fail, default_success, is_wav_path
+from ..core.sound import default_fail, default_success, is_sound_file
 
 APP_NAME = "cfb-data-tool"
 CONFIG_DIR = Path(user_config_dir(APP_NAME, appauthor=False))
@@ -47,9 +47,9 @@ class Settings:
                 known = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
                 s = cls(**known)
                 # Migrate old system-alias sounds to real .wav files.
-                if not is_wav_path(s.success_sound):
+                if not is_sound_file(s.success_sound):
                     s.success_sound = default_success()
-                if not is_wav_path(s.fail_sound):
+                if not is_sound_file(s.fail_sound):
                     s.fail_sound = default_fail()
                 return s
             except (json.JSONDecodeError, TypeError):

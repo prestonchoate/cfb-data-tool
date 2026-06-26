@@ -6,11 +6,21 @@ A friendly guide to capturing recruit data from College Football. No terminal, n
 
 ## 1. Install
 
+### Windows
+
 1. Download **`CFBDataTool-Setup.exe`** from the [Releases page](https://github.com/patches822/cfb-data-tool/releases).
 2. Double-click it → **Next → Next → Finish**. No admin password needed; it installs just for you.
 3. Launch **CFB Data Tool** from the Start Menu or the desktop shortcut.
 
 > Windows SmartScreen may warn about an unrecognized app (it's new and unsigned). Click **More info → Run anyway**.
+
+### macOS
+
+1. Download **`CFBDataTool.dmg`** (or **`CFBDataTool.app.zip`**) from the [Releases page](https://github.com/patches822/cfb-data-tool/releases).
+2. Open the DMG and drag **CFB Data Tool** into your **Applications** folder (or unzip the `.app`).
+3. Right-click the app → **Open** the first time (Gatekeeper will warn about an unidentified developer).
+
+> **Hotkey note:** The global scan hotkey requires Accessibility permission. Go to **System Settings > Privacy & Security > Accessibility** and add CFB Data Tool. Without it, use the on-screen **Scan** button.
 
 The first launch takes a few seconds while the text-recognition engine loads.
 
@@ -60,7 +70,7 @@ The **Data** tab is your collection — sortable and filterable. Re-scanning a r
 - **Default export CSV** — where CSV exports land when you click **Export CSV** in the Data tab.
 - **Scan hotkey** — click the field and press the key you want. Changes take effect after a restart.
 - **Flag fields below confidence** — OCR fields scoring below this threshold (default 0.80) are highlighted for review.
-- **Success / fail sounds** — pick any Windows sound (or your own `.wav`), with a ▶ preview.
+- **Success / fail sounds** — pick any system sound (or your own `.wav` / `.aiff`), with a ▶ preview.
 - **Auto-save valid scans** — save good manual scans without clicking Save.
 
 ![settings](docs/img/settings.png)
@@ -74,7 +84,8 @@ The **Data** tab is your collection — sortable and filterable. Re-scanning a r
 | Live preview is black or wrong | Re-do the **Game capture area** step; make sure the right **Game monitor** is selected. |
 | A field reads wrong | Calibrate that region (drag the box, use **Test OCR**). You can always fix a value before saving. |
 | Auto-capture double-scans or misses | Use **Remove Selected** in the queue for duplicates; let cards fully settle before scrolling. |
-| No sound | Check Windows volume/System sounds; pick a different sound in Settings and hit ▶. |
+| No sound | Check system volume; pick a different sound in Settings and hit ▶. |
+| Hotkey doesn't work (macOS) | Grant Accessibility permission in System Settings > Privacy & Security. Or use the on-screen **Scan** button. |
 
 ---
 

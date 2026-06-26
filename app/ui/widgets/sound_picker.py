@@ -7,7 +7,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QPushButton, QWidget
 
-from ...core.sound import is_wav_path, list_media_sounds, play_sound
+from ...core.sound import is_sound_file, list_media_sounds, play_sound
 
 _CUSTOM_LABEL = "Custom .wav file…"
 
@@ -48,7 +48,7 @@ class SoundPicker(QWidget):
                 self.combo.setCurrentIndex(i)
                 self._prev_index = i
                 return
-        if is_wav_path(value):
+        if is_sound_file(value):
             self._show_custom(value)
         elif self._custom_index > 0:  # unknown/alias -> first available media sound
             self.combo.setCurrentIndex(0)
@@ -65,7 +65,7 @@ class SoundPicker(QWidget):
     def _on_activated(self, index: int):
         if index == self._custom_index:
             path, _ = QFileDialog.getOpenFileName(
-                self, "Choose a .wav sound", "", "WAV audio (*.wav)")
+                self, "Choose a sound file", "", "Audio files (*.wav *.aiff)")
             if path:
                 self._show_custom(path)
             else:

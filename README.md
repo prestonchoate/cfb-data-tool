@@ -4,7 +4,7 @@ A friendly **desktop app** for capturing College Football data from your screen 
 
 This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patches822/cf26-recruit-scraper) CLI, rebuilt for non-technical users.
 
-> **Status:** ✅ Feature-complete (v0.1.1). Engine, UI, calibration editor, data viewer, inline correction, auto-capture, and a Windows installer are all in place. New users should start with [QUICKSTART.md](QUICKSTART.md).
+> **Status:** ✅ Feature-complete (v0.1.1). Engine, UI, calibration editor, data viewer, inline correction, auto-capture, and installers for Windows and macOS are all in place. New users should start with [QUICKSTART.md](QUICKSTART.md).
 
 ## Features
 
@@ -12,7 +12,7 @@ This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patch
 - **Built-in data viewer/export** — sortable, filterable, de-duplicated table backed by SQLite; export to CSV (import into your spreadsheet of choice).
 - **Live OCR confidence + inline correction** — low-confidence fields are flagged so you can fix a misread before saving.
 - **Auto-capture / batch mode** — optionally detect new cards and queue them for review.
-- **One-click install** — packaged Windows installer (PyInstaller + Inno Setup); macOS/Linux later.
+- **One-click install** — Windows installer (PyInstaller + Inno Setup) and macOS `.app` bundle (+ optional DMG).
 
 ## Architecture
 
@@ -24,7 +24,7 @@ app/core/profiles/     ScrapeProfile interface + registry; recruits is profile #
 app/core/calibration.py ROI presets keyed by (game_version, profile); resolution scaling
 app/core/engine.py     scan(image) -> ScanResult  (produces results; never saves)
 app/core/capture.py    screen capture via mss (BGR numpy arrays)
-app/core/sound.py      sound playback (.wav success/fail feedback)
+app/core/sound.py      cross-platform sound playback (.wav / .aiff)
 app/io/                SQLite record store + CSV export
 app/config/presets/    JSON ROI presets (e.g. cfb26/recruits.json)
 ```
@@ -33,11 +33,12 @@ OCR was switched from EasyOCR to **RapidOCR (ONNX)** to drop the PyTorch depende
 
 ## Developer setup
 
-Requires **Python 3.10+**.
+Requires **Python 3.12+**.
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate           # Windows (use source .venv/bin/activate elsewhere)
+.venv\Scripts\activate      # Windows
+source .venv/bin/activate   # macOS / Linux
 pip install -e .
 ```
 
@@ -81,6 +82,18 @@ Verify a bundle without launching the UI:
 $env:CFB_SMOKE = "1"; .\dist\CFBDataTool\CFBDataTool.exe
 Get-Content .\dist\CFBDataTool\smoke_result.txt   # should say "SMOKE OK"
 ```
+
+## Building the macOS app
+
+```bash
+pip install pyinstaller       # in the venv
+python packaging/gen_icons.py  # generate icon.icns + icon.ico from icon.png (one-time)
+bash packaging/build_mac.sh
+```
+
+This produces `dist/CFBDataTool.app`. If [`create-dmg`](https://github.com/create-dmg/create-dmg) is installed (`brew install create-dmg`), the script also builds `dist/installer/CFBDataTool.dmg` with a drag-to-Applications layout.
+
+> **Note:** The global scan hotkey requires Accessibility permission on macOS (System Settings > Privacy & Security > Accessibility). Without it, use the on-screen **Scan** button.
 
 End-user instructions live in [QUICKSTART.md](QUICKSTART.md). Release history is in [CHANGELOG.md](CHANGELOG.md).
 

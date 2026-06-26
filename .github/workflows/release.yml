@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e .[dev]
+
+      - name: Generate platform icons
+        run: python packaging/gen_icons.py
+
+      - name: Build app bundle
+        run: pyinstaller --noconfirm --clean packaging/cfbdatatool.spec
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        run: iscc packaging/installer.iss
+
+      - name: Smoke test
+        run: |
+          $env:CFB_SMOKE = "1"
+          .\dist\CFBDataTool\CFBDataTool.exe
+          Get-Content .\dist\CFBDataTool\smoke_result.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/installer/CFBDataTool-Setup.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e .[dev]
+
+      - name: Generate platform icons
+        run: python packaging/gen_icons.py
+
+      - name: Build .app bundle
+        run: pyinstaller --noconfirm --clean packaging/cfbdatatool.spec
+
+      - name: Smoke test
+        run: |
+          CFB_SMOKE=1 ./dist/CFBDataTool.app/Contents/MacOS/CFBDataTool || true
+          cat ./dist/CFBDataTool.app/Contents/MacOS/smoke_result.txt
+
+      - name: Zip .app for upload
+        run: cd dist && zip -r CFBDataTool-macOS.zip CFBDataTool.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: dist/CFBDataTool-macOS.zip
+
+  release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: artifacts/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-app
+          path: artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          files: |
+            artifacts/CFBDataTool-Setup.exe
+            artifacts/CFBDataTool-macOS.zip
