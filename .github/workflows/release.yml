@@ -36,7 +36,7 @@ jobs:
       - name: Smoke test
         run: |
           $env:CFB_SMOKE = "1"
-          .\dist\CFBDataTool\CFBDataTool.exe
+          Start-Process -FilePath .\dist\CFBDataTool\CFBDataTool.exe -Wait
           Get-Content .\dist\CFBDataTool\smoke_result.txt
 
       - uses: actions/upload-artifact@v4
