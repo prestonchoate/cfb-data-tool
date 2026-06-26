@@ -13,6 +13,7 @@ import copy
 import logging
 
 from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import (
     QCheckBox, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QListWidget,
     QPushButton, QVBoxLayout, QWidget,
@@ -60,6 +61,11 @@ class CaptureTab(QWidget):
         self._active_queue_row = None       # queue row currently shown in the card
         self._prev_name_roi = None          # previous tick's name ROI (grayscale)
         self._last_scan_name_roi = None     # name ROI of the last auto-captured card
+        self._queue_snapshots: list[np.ndarray] = []  # BGR frame at scan time, parallel to _queue
+        self._pending_snapshot: np.ndarray | None = None  # held between scan_now() and _enqueue()
+        self._viewing_snapshot: bool = False  # True when preview shows a cached snapshot
+        self._live_was_on: bool = False       # was live on before snapshot view?
+        self._enqueuing: bool = False         # suppresses snapshot on auto-enqueue selection
 
         self._build_ui()
 
@@ -87,6 +93,12 @@ class CaptureTab(QWidget):
         self.preview.setMinimumSize(480, 280)
         self.preview.setStyleSheet("background:#111; color:#888; border:1px solid #333;")
         left.addWidget(self.preview, 1)
+
+        self.back_to_live_btn = QPushButton("↩ Back to Live")
+        self.back_to_live_btn.setToolTip("Stop viewing the cached snapshot and resume live preview.")
+        self.back_to_live_btn.clicked.connect(self._resume_live)
+        self.back_to_live_btn.setVisible(False)
+        left.addWidget(self.back_to_live_btn)
 
         controls = QHBoxLayout()
         self.live_btn = QPushButton("▶ Start Live")
@@ -184,10 +196,15 @@ class CaptureTab(QWidget):
     def _toggle_live(self, on: bool):
         if on:
             self.live_btn.setText("⏸ Stop Live")
-            self._timer.start()
+            if self._viewing_snapshot:
+                self._live_was_on = True
+            else:
+                self._timer.start()
         else:
             self.live_btn.setText("▶ Start Live")
             self._timer.stop()
+            if self._viewing_snapshot:
+                self._live_was_on = False
 
     def _tick_preview(self):
         try:
@@ -206,6 +223,8 @@ class CaptureTab(QWidget):
         self.queue_group.setVisible(on)
         self._prev_name_roi = None
         self._last_scan_name_roi = None
+        if not on and self._viewing_snapshot:
+            self._resume_live()
         if on and not self.live_btn.isChecked():
             self.live_btn.setChecked(True)  # auto-capture needs the live feed
         self._set_status("Auto-capture ON — new recruits are queued for review."
@@ -254,6 +273,9 @@ class CaptureTab(QWidget):
         if frame is None:
             self._set_status(f"Could not read image: {path}")
             return
+        if self._viewing_snapshot:
+            self._viewing_snapshot = False
+            self.back_to_live_btn.setVisible(False)
         self.live_btn.setChecked(False)
         self.frame = frame
         self._show_frame(frame)
@@ -263,6 +285,39 @@ class CaptureTab(QWidget):
         pix = bgr_to_qpixmap(frame).scaled(
             self.preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.preview.setPixmap(pix)
+
+    def _show_snapshot(self, frame):
+        pix = bgr_to_qpixmap(frame).scaled(
+            self.preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        painter = QPainter(pix)
+        painter.setRenderHint(QPainter.Antialiasing)
+        font = QFont()
+        font.setPixelSize(12)
+        font.setBold(True)
+        painter.setFont(font)
+        text = " SNAPSHOT "
+        metrics = painter.fontMetrics()
+        text_rect = metrics.boundingRect(text)
+        pad = 4
+        badge_w = text_rect.width() + 2 * pad
+        badge_h = text_rect.height() + 2 * pad
+        x = 6
+        y = 6
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 160))
+        painter.drawRoundedRect(x, y, badge_w, badge_h, 4, 4)
+        painter.setPen(QColor(255, 255, 255))
+        painter.drawText(x + pad, y + pad + metrics.ascent(), text)
+        painter.end()
+        self.preview.setPixmap(pix)
+
+    def _resume_live(self):
+        self._viewing_snapshot = False
+        self.back_to_live_btn.setVisible(False)
+        if self._live_was_on:
+            self._timer.start()
+        elif self.frame is not None:
+            self._show_frame(self.frame)
 
     # ---- Scan ------------------------------------------------------------
     def scan_now(self, auto: bool = False):
@@ -280,6 +335,8 @@ class CaptureTab(QWidget):
         self._scan_is_auto = auto
         self.scan_btn.setEnabled(False)
         self._set_status("Auto-capturing…" if auto else "Scanning…")
+        if auto:
+            self._pending_snapshot = self.frame.copy()
         self._scan_worker = ScanWorker(self.engine, self.frame.copy())
         self._scan_worker.done.connect(self._on_scan_done)
         self._scan_worker.failed.connect(self._on_scan_failed)
@@ -302,6 +359,7 @@ class CaptureTab(QWidget):
 
     def _on_scan_failed(self, err: str):
         self._scanning = False
+        self._pending_snapshot = None
         self.scan_btn.setEnabled(True)
         self._set_status(f"Scan error: {err}")
 
@@ -326,9 +384,13 @@ class CaptureTab(QWidget):
 
     def _enqueue(self, result):
         self._queue.append(copy.deepcopy(result.record))
+        self._queue_snapshots.append(self._pending_snapshot)
+        self._pending_snapshot = None
         self.queue_list.addItem(self._queue_label(self._queue[-1]))
         self._update_queue_buttons()
+        self._enqueuing = True
         self.queue_list.setCurrentRow(len(self._queue) - 1)  # shows it in the card
+        self._enqueuing = False
         self._set_status(f"Queued {result.record.get('NAME', 'recruit')} — "
                          f"{len(self._queue)} awaiting review.")
 
@@ -345,11 +407,31 @@ class CaptureTab(QWidget):
         self.result_card.show_record(self._queue[row])
         self.save_btn.setEnabled(True)
 
+        snapshot = self._queue_snapshots[row] if row < len(self._queue_snapshots) else None
+        if snapshot is not None and not self._enqueuing:
+            if not self._viewing_snapshot:
+                self._live_was_on = self._timer.isActive()
+                self._timer.stop()
+            self._viewing_snapshot = True
+            self._show_snapshot(snapshot)
+            self.back_to_live_btn.setVisible(True)
+
     def _remove_queue_row(self, row: int):
+        was_viewing = self._viewing_snapshot
         del self._queue[row]
+        del self._queue_snapshots[row]
         self.queue_list.takeItem(row)
         self._active_queue_row = None
         self._update_queue_buttons()
+        if was_viewing:
+            if self._queue:
+                # Qt auto-selects an adjacent row after takeItem; let that
+                # selection show its snapshot instead of resuming live.
+                next_row = self.queue_list.currentRow()
+                if 0 <= next_row < len(self._queue):
+                    self._on_queue_select(next_row)
+            else:
+                self._resume_live()
 
     def _remove_selected(self):
         row = self.queue_list.currentRow()
@@ -381,9 +463,12 @@ class CaptureTab(QWidget):
 
     def _clear_queue(self):
         self._queue.clear()
+        self._queue_snapshots.clear()
         self.queue_list.clear()
         self._active_queue_row = None
         self._update_queue_buttons()
+        if self._viewing_snapshot:
+            self._resume_live()
 
     # ---- Save ------------------------------------------------------------
     def save_current(self):
@@ -404,3 +489,5 @@ class CaptureTab(QWidget):
     def shutdown(self):
         self._timer.stop()
         self.hotkey.stop()
+        self._queue_snapshots.clear()
+        self._pending_snapshot = None

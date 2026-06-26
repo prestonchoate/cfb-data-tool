@@ -58,10 +58,23 @@ def get_star_rating(
             new_w = max(1, round(template.shape[1] * scale))
             template = cv2.resize(template, (new_w, new_h), interpolation=cv2.INTER_AREA)
         if gray.shape[0] < template.shape[0] or gray.shape[1] < template.shape[1]:
-            logger.warning(
-                "Star ROI (%dx%d) smaller than template (%dx%d) — using contour fallback.",
-                gray.shape[1], gray.shape[0], template.shape[1], template.shape[0],
-            )
+            fit_scale = min(gray.shape[0] / template.shape[0],
+                            gray.shape[1] / template.shape[1])
+            new_h = max(1, int(template.shape[0] * fit_scale))
+            new_w = max(1, int(template.shape[1] * fit_scale))
+            if new_h >= 5 and new_w >= 5:
+                logger.info(
+                    "Star template (%dx%d) exceeds ROI (%dx%d) — shrinking to %dx%d.",
+                    template.shape[1], template.shape[0],
+                    gray.shape[1], gray.shape[0], new_w, new_h,
+                )
+                template = cv2.resize(template, (new_w, new_h), interpolation=cv2.INTER_AREA)
+                use_template = True
+            else:
+                logger.warning(
+                    "Star ROI (%dx%d) too small for template matching — using contour fallback.",
+                    gray.shape[1], gray.shape[0],
+                )
         else:
             use_template = True
     else:
