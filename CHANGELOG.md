@@ -2,6 +2,23 @@
 
 All notable changes to CFB Data Tool are documented here.
 
+## [0.1.2] — 2026-06-26
+
+### Added
+
+- **macOS support** — cross-platform sound playback (`.aiff` via `afplay` on macOS), PyInstaller `.app` bundle, optional DMG packaging via `create-dmg`, and CI smoke tests on macOS.
+- **Snapshot review for auto-capture** — each auto-captured recruit now caches the screen frame at scan time. Clicking a queued recruit pauses the live preview and shows the original screenshot with a "SNAPSHOT" badge, making it easy to compare OCR results against the source. A "Back to Live" button resumes the feed.
+
+### Fixed
+
+- **Star template matching fallback** — when the scaled star template exceeds the ROI dimensions, it is now shrunk to fit rather than falling back to less accurate contour detection.
+
+### Changed
+
+- Python version requirement raised to **3.12+**.
+
+---
+
 ## [0.1.1] — 2026-06-24
 
 ### Added
