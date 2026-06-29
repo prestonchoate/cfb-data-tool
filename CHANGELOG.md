@@ -2,6 +2,26 @@
 
 All notable changes to CFB Data Tool are documented here.
 
+## [0.1.3] — 2026-06-29
+
+### Added
+
+- **Ability & mental trait scraping** — recruit scans now extract up to 5 abilities and 3 mental traits, each with their tier (Bronze / Silver / Gold / Platinum) detected via HSV icon-color classification. OCR results are fuzzy-matched against a bundled ability table keyed by position + archetype for higher accuracy. The result card shows editable name + tier dropdown for each ability and mental.
+- **Missing-attribute correction slots** — the result card now renders empty attribute rows (with a dropdown of remaining attribute names and a value input) when a scan returns fewer attributes than expected for the position, making it easy to fill in missed fields without re-scanning.
+- **Automatic schema migration** — existing SQLite databases are transparently upgraded with new columns (abilities, mentals) on first load, so users upgrading from earlier versions keep their data.
+- **Calibration preset merging** — when new ROI keys are added to a bundled preset (e.g. `abilities`, `mentals`), they are automatically merged into saved user calibrations so new features work without re-calibrating.
+
+### Fixed
+
+- **"Save All" keeps invalid scans in queue** — previously, "Save All to Collection" silently discarded records that failed validation. Now only valid recruits are saved; invalid ones remain in the queue for correction or removal.
+
+### Changed
+
+- **Expanded recruit schema** — the CSV/SQLite schema now includes `ABILITY_1–5`, `ABILITY_1_LEVEL–5_LEVEL`, `MENTAL_1–3`, and `MENTAL_1_LEVEL–3_LEVEL` columns between basic info and attributes.
+- **Documentation refresh** — README expanded with ability/mental feature description and reorganized test instructions; QUICKSTART updated with save-all behavior clarification; updated screenshots.
+
+---
+
 ## [0.1.2] — 2026-06-26
 
 ### Added
