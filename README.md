@@ -11,7 +11,8 @@ This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patch
 - **Visual ROI editor + auto-calibration** — drag/resize the capture regions over a live screenshot; auto-scale to any resolution (no more hand-editing pixel offsets).
 - **Built-in data viewer/export** — sortable, filterable, de-duplicated table backed by SQLite; export to CSV (import into your spreadsheet of choice).
 - **Live OCR confidence + inline correction** — low-confidence fields are flagged so you can fix a misread before saving.
-- **Auto-capture / batch mode** — optionally detect new cards and queue them for review.
+- **Auto-capture / batch mode** — optionally detect new cards and queue them for review. Invalid scans stay in the queue after saving so you can fix or discard them.
+- **Abilities & mentals** — scrapes ability names with tier detection (Bronze/Silver/Gold/Platinum) and mental traits from the recruit card.
 - **One-click install** — Windows installer (PyInstaller + Inno Setup) and macOS `.app` bundle (+ optional DMG).
 
 ## Architecture
@@ -19,7 +20,7 @@ This is the GUI successor to the [cf26-recruit-scraper](https://github.com/patch
 ```txt
 app/ui/                PySide6 desktop UI (Capture, Calibrate, Data, Settings tabs)
 app/core/ocr/          OCR behind an interface (RapidOCR/ONNX backend)
-app/core/processor.py  star count (template match) + gem/bust (HSV) — CV, not OCR
+app/core/processor.py  star count (template match) + gem/bust + ability tier (HSV) — CV, not OCR
 app/core/profiles/     ScrapeProfile interface + registry; recruits is profile #1
 app/core/calibration.py ROI presets keyed by (game_version, profile); resolution scaling
 app/core/engine.py     scan(image) -> ScanResult  (produces results; never saves)
@@ -42,20 +43,38 @@ source .venv/bin/activate   # macOS / Linux
 pip install -e .
 ```
 
-### Run the accuracy harness
+### Tests
+
+Tests are standalone scripts (not pytest-based). Run them directly:
 
 ```bash
-# Uses tests/fixtures/screenshots by default.
+# Smoke tests (headless, no screenshots needed)
+python tests/smoke_autocapture.py       # auto-capture + review queue
+python tests/smoke_data.py              # data tab + store
+
+# Smoke tests (need fixture screenshots in tests/fixtures/screenshots/)
+python tests/smoke_ui.py                # basic UI construction
+python tests/smoke_calibration.py       # calibration preset loading/scaling
+
+# Or run all smoke tests via pytest
+pytest tests/test_smoke.py -v
+```
+
+#### OCR accuracy harness
+
+Runs the engine over a folder of recruit-card screenshots and reports per-image pass/fail plus a per-field failure breakdown. Results are written as JSON to `tests/reports/`.
+
+```bash
+# Uses the committed sample in tests/fixtures/screenshots/ by default.
 python tests/test_accuracy.py
 
-# Point at the full screenshot corpus (not committed — it's large):
-set CFB_SCREENSHOTS=D:\path\to\cf26-recruit-scraper\screenshots   # Windows
+# Point at a larger screenshot corpus (not committed):
+set CFB_SCREENSHOTS=C:\path\to\screenshots   # Windows
+export CFB_SCREENSHOTS=/path/to/screenshots  # macOS / Linux
 python tests/test_accuracy.py
 ```
 
-It prints a per-image pass/fail table plus a per-field failure breakdown, and writes a JSON report to `tests/reports/`.
-
-### Inspect raw OCR for one image
+#### Debug OCR for a single image
 
 ```bash
 python tests/debug_ocr.py path/to/screenshot.png

@@ -109,6 +109,18 @@ def main() -> int:
     assert len(cap._queue) == 0 and cap.queue_list.count() == 0
     print(f"• Save All -> {store.count()} in collection (deduped); queue cleared")
 
+    # --- save all retains invalid records in queue ---
+    cap._enqueue(make_result("Valid Guy", "RB"))
+    invalid_result = make_result("", "")  # missing NAME and POSITION -> invalid
+    cap._enqueue(invalid_result)
+    cap._enqueue(make_result("Also Valid", "TE"))
+    assert len(cap._queue) == 3
+    cap._save_all()
+    assert store.count() == 4, store.count()  # 2 prior + 2 new valid
+    assert len(cap._queue) == 1 and cap.queue_list.count() == 1
+    assert cap._queue[0]["NAME"] == ""  # the invalid one remains
+    print("• Save All keeps invalid records in queue for review")
+
     cap.shutdown()
     if cap._init_worker.isRunning():
         cap._init_worker.wait(20000)
