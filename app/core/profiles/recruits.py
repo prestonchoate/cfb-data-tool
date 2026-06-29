@@ -345,10 +345,11 @@ def _extract_icons_and_text(items, cropped, header_filter):
     confs = [conf for _, _, _, conf in items]
     rows = _group_by_y(items, threshold=25)
 
+    icon_right = max(1, int(max(min(x for x, _, _, _ in row)
+                                   for row in rows) - 5)) if rows else 1
+
     results = {}
     for row_items in rows:
-        min_text_x = min(x for x, _, _, _ in row_items)
-        icon_right = max(1, int(min_text_x - 5))
 
         text_tokens = sorted(row_items, key=lambda r: r[0])
         text = " ".join(t for _, _, t, _ in text_tokens)
