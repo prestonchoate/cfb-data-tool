@@ -120,7 +120,8 @@ def detect_ability_level(icon_img: np.ndarray) -> str:
 
     counts = {"warm": warm_count, "Platinum": plat_count, "Silver": silver_count}
     best = max(counts, key=counts.get)
-    if counts[best] < 50:
+    min_pixels = max(10, int(icon_img.shape[0] * icon_img.shape[1] * 0.03))
+    if counts[best] < min_pixels:
         return ""
 
     if best == "warm":
