@@ -47,6 +47,19 @@ ABILITY_HEADERS = [
     "ABILITY_5", "ABILITY_5_LEVEL",
 ]
 
+MENTAL_HEADERS = [
+    "MENTAL_1", "MENTAL_1_LEVEL",
+    "MENTAL_2", "MENTAL_2_LEVEL",
+    "MENTAL_3", "MENTAL_3_LEVEL",
+]
+
+MENTAL_NAMES = [
+    "Best Friend", "Clear Headed", "Clutch Kicker", "Defensive Rally",
+    "Fan Favorite", "Field General", "Hot Head", "Headstrong",
+    "Legion", "Offensive Rally", "Road Dog", "Team Player",
+    "The Natural", "Winning Time",
+]
+
 POSITION_ATTRIBUTE_COUNT = {
     "QB": 10, "HB": 10, "FB": 10, "WR": 10, "TE": 10,
     "OT": 10, "OG": 10, "C": 10, "DT": 10, "DE": 10,
@@ -325,6 +338,36 @@ def _group_by_y(items, threshold=25):
     return rows
 
 
+def _extract_icons_and_text(items, cropped, header_filter):
+    """Shared extraction for abilities and mentals: pair icon colors with text."""
+    items = [(x, y, text, conf) for x, y, text, conf in items
+             if text.strip().upper() != header_filter]
+    confs = [conf for _, _, _, conf in items]
+    rows = _group_by_y(items, threshold=25)
+
+    results = {}
+    for row_items in rows:
+        min_text_x = min(x for x, _, _, _ in row_items)
+        icon_right = max(1, int(min_text_x - 5))
+
+        text_tokens = sorted(row_items, key=lambda r: r[0])
+        text = " ".join(t for _, _, t, _ in text_tokens)
+        if not text.strip():
+            continue
+
+        avg_y = sum(it[1] for it in row_items) / len(row_items)
+        band_top = max(0, int(avg_y - 15))
+        band_bot = min(cropped.shape[0], int(avg_y + 25))
+        icon_crop = cropped[band_top:band_bot, 0:icon_right]
+        level = ""
+        if icon_crop.size > 0:
+            level = processor.detect_ability_level(icon_crop)
+
+        results[text.strip()] = level
+
+    return results, _mean_conf(confs)
+
+
 def extract_abilities(ocr, img, rois, position: str, archetype: str):
     roi = rois.get("abilities")
     if roi is None:
@@ -332,42 +375,31 @@ def extract_abilities(ocr, img, rois, position: str, archetype: str):
 
     expected = _get_expected_abilities(position, archetype)
     items = _read_with_xy(ocr, img, roi)
-    items = [(x, y, text, conf) for x, y, text, conf in items
-             if text.strip().upper() != "ABILITIES"]
-    confs = [conf for _, _, _, conf in items]
-
-    rows = _group_by_y(items, threshold=25)
-
-    # Partition each row into icon region (leftmost) and text region by X.
-    # The icon sits to the left of the ability name.
-    roi_y, roi_h, roi_x, roi_w = roi
-    icon_width = int(roi_w * 0.12)
     cropped = _crop(img, roi)
 
-    abilities = {}
-    for row_items in rows:
-        text_tokens = [(x, t) for x, _, t, _ in row_items if x > icon_width]
-        if not text_tokens:
-            text_tokens = [(x, t) for x, _, t, _ in row_items]
-        text_tokens.sort(key=lambda r: r[0])
-        text = " ".join(t for _, t in text_tokens)
-        if not text.strip():
-            continue
+    abilities, conf = _extract_icons_and_text(items, cropped, "ABILITIES")
 
-        name = _fuzzy_match_ability(text, expected) if expected else text.strip()
+    if expected:
+        abilities = {_fuzzy_match_ability(name, expected): level
+                     for name, level in abilities.items()}
 
-        # Detect level from the icon sub-region for this row's Y band.
-        avg_y = sum(it[1] for it in row_items) / len(row_items)
-        band_top = max(0, int(avg_y - 15))
-        band_bot = min(cropped.shape[0], int(avg_y + 25))
-        icon_crop = cropped[band_top:band_bot, 0:icon_width]
-        level = ""
-        if icon_crop.size > 0:
-            level = processor.detect_ability_level(icon_crop)
+    return abilities, conf
 
-        abilities[name] = level
 
-    return abilities, _mean_conf(confs)
+def extract_mentals(ocr, img, rois):
+    roi = rois.get("mentals")
+    if roi is None:
+        return {}, 0.0
+
+    items = _read_with_xy(ocr, img, roi)
+    cropped = _crop(img, roi)
+
+    mentals, conf = _extract_icons_and_text(items, cropped, "MENTALS")
+
+    mentals = {_fuzzy_match_ability(name, MENTAL_NAMES): level
+               for name, level in mentals.items()}
+
+    return mentals, conf
 
 
 def extract_dev_trait(ocr, img, rois):
@@ -391,13 +423,13 @@ class RecruitsProfile(ScrapeProfile):
     def roi_keys(self):
         return [
             "name", "position", "archetype", "recruit_class", "hometown",
-            "height_weight", "abilities", "attributes", "star_rating",
-            "gem_icon", "dev_trait",
+            "height_weight", "abilities", "mentals", "attributes",
+            "star_rating", "gem_icon", "dev_trait",
         ]
 
     @property
     def schema(self):
-        return BASIC_INFO_HEADERS + ABILITY_HEADERS + ATTRIBUTE_HEADERS
+        return BASIC_INFO_HEADERS + ABILITY_HEADERS + MENTAL_HEADERS + ATTRIBUTE_HEADERS
 
     @property
     def dedupe_keys(self):
@@ -413,6 +445,7 @@ class RecruitsProfile(ScrapeProfile):
         height, weight, hw_conf = extract_height_weight(ocr, img, rois)
         conf["HEIGHT"] = conf["WEIGHT"] = hw_conf
         abilities, conf["abilities"] = extract_abilities(ocr, img, rois, position, archetype)
+        mentals, conf["mentals"] = extract_mentals(ocr, img, rois)
         attributes, conf["attributes"] = extract_attributes(ocr, img, rois)
         dev_trait, conf["DEV TRAIT"] = extract_dev_trait(ocr, img, rois)
 
@@ -428,6 +461,7 @@ class RecruitsProfile(ScrapeProfile):
             "HOMETOWN": hometown,
             "DEV TRAIT": dev_trait,
             "abilities": abilities,
+            "mentals": mentals,
             "attributes": attributes,
             "_confidence": conf,
         }
@@ -452,6 +486,13 @@ class RecruitsProfile(ScrapeProfile):
         for i in range(5):
             if i < len(ability_items):
                 name, level = ability_items[i]
+                row.extend([name, level])
+            else:
+                row.extend(["", ""])
+        mental_items = list(record.get("mentals", {}).items())
+        for i in range(3):
+            if i < len(mental_items):
+                name, level = mental_items[i]
                 row.extend([name, level])
             else:
                 row.extend(["", ""])

@@ -125,7 +125,8 @@ def detect_ability_level(icon_img: np.ndarray) -> str:
 
     if best == "warm":
         warm_v = hsv[:, :, 2][warm_mask > 0]
-        return "Gold" if np.median(warm_v) >= 100 else "Bronze"
+        bright_ratio = float((warm_v > 180).sum()) / len(warm_v)
+        return "Gold" if bright_ratio >= 0.15 else "Bronze"
     return best
 
 

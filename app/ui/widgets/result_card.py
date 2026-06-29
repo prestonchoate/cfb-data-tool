@@ -49,6 +49,7 @@ class ResultCard(QWidget):
         self._record: dict | None = None
         self._field_widgets: dict = {}
         self._ability_widgets: dict = {}
+        self._mental_widgets: dict = {}
         self._attr_widgets: dict = {}
 
         outer = QVBoxLayout(self)
@@ -81,6 +82,11 @@ class ResultCard(QWidget):
         self._abilities = QGridLayout(self._abilities_box)
         root.addWidget(self._abilities_box)
 
+        self._mentals_box = QGroupBox("Mentals")
+        self._mentals_box.setVisible(False)
+        self._mentals = QGridLayout(self._mentals_box)
+        root.addWidget(self._mentals_box)
+
         attrs_box = QGroupBox("Attributes")
         self._attrs = QGridLayout(attrs_box)
         root.addWidget(attrs_box)
@@ -99,9 +105,11 @@ class ResultCard(QWidget):
         self._record = copy.deepcopy(record)
         self._field_widgets.clear()
         self._ability_widgets.clear()
+        self._mental_widgets.clear()
         self._attr_widgets.clear()
         self._build_basics()
         self._build_abilities()
+        self._build_mentals()
         self._build_attrs()
         self._update_banner()
 
@@ -177,6 +185,24 @@ class ResultCard(QWidget):
             self._abilities.addWidget(name_edit, row, 0)
             self._abilities.addWidget(level_cb, row, 1)
 
+    def _build_mentals(self):
+        self._clear(self._mentals)
+        mentals = self._record.get("mentals", {})
+        self._mentals_box.setVisible(bool(mentals))
+        for row, (name, level) in enumerate(mentals.items()):
+            name_edit = QLineEdit(str(name))
+            name_edit.textEdited.connect(
+                lambda v, old=name: self._on_mental_name_edit(old, v))
+            level_cb = QComboBox()
+            level_cb.addItems(_LEVEL_OPTIONS)
+            if str(level) in _LEVEL_OPTIONS:
+                level_cb.setCurrentText(str(level))
+            level_cb.currentTextChanged.connect(
+                lambda v, n=name: self._on_mental_level_edit(n, v))
+            self._mental_widgets[name] = (name_edit, level_cb)
+            self._mentals.addWidget(name_edit, row, 0)
+            self._mentals.addWidget(level_cb, row, 1)
+
     def _build_attrs(self):
         self._clear(self._attrs)
         attrs = self._record.get("attributes", {})
@@ -234,6 +260,17 @@ class ResultCard(QWidget):
 
     def _on_ability_level_edit(self, name, level):
         self._record.setdefault("abilities", {})[name] = level
+        self.changed.emit()
+
+    def _on_mental_name_edit(self, old_name, new_name):
+        mentals = self._record.get("mentals", {})
+        if old_name in mentals:
+            level = mentals.pop(old_name)
+            mentals[new_name] = level
+        self.changed.emit()
+
+    def _on_mental_level_edit(self, name, level):
+        self._record.setdefault("mentals", {})[name] = level
         self.changed.emit()
 
     def _on_missing_attr_changed(self, pair_idx):
