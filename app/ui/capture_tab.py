@@ -447,18 +447,28 @@ class CaptureTab(QWidget):
         if not self._queue:
             return
         profile = get_profile(self.settings.profile)
-        saved = skipped = 0
-        for record in self._queue:
+        saved = 0
+        keep_idx = []
+        for i, record in enumerate(self._queue):
             if profile.validate(record)[0]:
                 self.store.upsert(profile.to_row(record))
                 saved += 1
             else:
-                skipped += 1
-        self._clear_queue()
+                keep_idx.append(i)
+        self._queue = [self._queue[i] for i in keep_idx]
+        self._queue_snapshots = [self._queue_snapshots[i] for i in keep_idx]
+        self.queue_list.clear()
+        for record in self._queue:
+            self.queue_list.addItem(self._queue_label(record))
+        self._active_queue_row = None
+        self._update_queue_buttons()
+        if not self._queue and self._viewing_snapshot:
+            self._resume_live()
         self.recruit_saved.emit()
+        skipped = len(keep_idx)
         msg = f"Saved {saved} recruit(s) to the collection."
         if skipped:
-            msg += f" Skipped {skipped} invalid (fix them and re-scan)."
+            msg += f" {skipped} invalid remain in queue — fix or remove them."
         self._set_status(msg)
 
     def _clear_queue(self):

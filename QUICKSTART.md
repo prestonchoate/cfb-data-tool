@@ -49,7 +49,7 @@ Open the **Capture** tab and click **Start Live** — you'll see a live thumbnai
 
 > **No game handy?** Click **Load Image…** to test with a saved screenshot.
 
-**Hands-free (auto-capture):** tick **Auto-capture new recruits**. As you scroll through recruits in-game, each new card is scanned into a **Review queue**. When you're done, review the list (remove any duplicates with **Remove Selected**), then **Save All to Collection**. ![queue](docs/img/capture-queue.png)
+**Hands-free (auto-capture):** tick **Auto-capture new recruits**. As you scroll through recruits in-game, each new card is scanned into a **Review queue**. When you're done, review the list (remove any duplicates with **Remove Selected**), then **Save All to Collection**. Valid recruits are saved; any invalid scans stay in the queue so you can fix or remove them. ![queue](docs/img/capture-queue.png)
 
 ---
 
@@ -59,7 +59,7 @@ The **Data** tab is your collection — sortable and filterable. Re-scanning a r
 
 - Type in the filter box to find recruits.
 - Click a column header to sort.
-- **Export CSV…** to open your recruits in Excel or Google Sheets. 
+- **Export CSV…** to open your recruits in Excel or Google Sheets.
 
 ![data](docs/img/data.png)
 
