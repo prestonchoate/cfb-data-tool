@@ -19,25 +19,25 @@ class TestStarRatingScaling:
 
     def test_roi_smaller_than_template_does_not_crash(self):
         roi = _blank_roi(20, 80)
-        result = get_star_rating(roi, scale=1.0)
+        result, conf = get_star_rating(roi, scale=1.0)
         assert 0 <= result <= 5
 
     def test_scaled_template_does_not_crash(self):
         roi = _blank_roi(25, 120)
-        result = get_star_rating(roi, scale=0.5)
+        result, conf = get_star_rating(roi, scale=0.5)
         assert 0 <= result <= 5
 
     def test_scale_1_with_normal_roi(self):
         roi = _blank_roi(50, 240)
-        result = get_star_rating(roi, scale=1.0)
+        result, conf = get_star_rating(roi, scale=1.0)
         assert 0 <= result <= 5
 
     def test_very_small_scale(self):
         roi = _blank_roi(10, 48)
-        result = get_star_rating(roi, scale=0.2)
+        result, conf = get_star_rating(roi, scale=0.2)
         assert 0 <= result <= 5
 
     def test_upscale(self):
         roi = _blank_roi(100, 480)
-        result = get_star_rating(roi, scale=2.0)
+        result, conf = get_star_rating(roi, scale=2.0)
         assert 0 <= result <= 5

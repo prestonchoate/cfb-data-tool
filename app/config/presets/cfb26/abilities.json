@@ -1,9 +1,9 @@
 {
   "QB": {
-    "Backfield Creator": ["Off Platform", "Pull Down", "On Time", "Magician", "Mobile Deadeye"],
+    "Backfield Creator": ["Off Platform", "Pull Down", "On Time", "Sleight of Hand", "Mobile Deadeye"],
     "Dual Threat": ["Downhill", "Extender", "Option King", "Dot!", "Mobile Resistance"],
     "Pocket Passer": ["Resistance", "Step Up", "Sleight Of Hand", "Dot!", "On Time"],
-    "Pure Runner": ["Downhill", "Option King", "Shifty", "Side Step", "Workhorse"]
+    "Pure Runner": ["Magician", "Option King", "Shifty", "Side Step", "Workhorse"]
   },
   "HB": {
     "Backfield Threat": ["360", "Safety Valve", "Takeoff", "Side Step", "Recoup"],
@@ -33,13 +33,25 @@
     "Pure Blocker": ["Strong Grip", "Quick Drop", "Outside Shield", "Pocket Shield", "Second Level"],
     "Vertical Threat": ["Workhorse", "Balanced", "Take Off", "Recoup", "50/50"]
   },
-  "OT": {
+  "LT": {
     "Agile": ["Screen Enforcer", "Quick Step", "Option Shield", "Outside Shield", "Quick Drop"],
     "Pass Protector": ["Pocket Shield", "Quick Drop", "PA Shield", "Strong Grip", "Wear Down"],
     "Raw Strength": ["Strong Grip", "Workhorse", "Second Level", "Inside Shield", "Ground N Pound"],
     "Well Rounded": ["Pocket Shield", "Outside Shield", "Strong Grip", "Option Shield", "Inside Shield"]
   },
-  "OG": {
+  "RT": {
+    "Agile": ["Screen Enforcer", "Quick Step", "Option Shield", "Outside Shield", "Quick Drop"],
+    "Pass Protector": ["Pocket Shield", "Quick Drop", "PA Shield", "Strong Grip", "Wear Down"],
+    "Raw Strength": ["Strong Grip", "Workhorse", "Second Level", "Inside Shield", "Ground N Pound"],
+    "Well Rounded": ["Pocket Shield", "Outside Shield", "Strong Grip", "Option Shield", "Inside Shield"]
+  },
+  "LG": {
+    "Agile": ["Screen Enforcer", "Quick Step", "Option Shield", "Outside Shield", "Quick Drop"],
+    "Pass Protector": ["Pocket Shield", "Quick Drop", "PA Shield", "Strong Grip", "Wear Down"],
+    "Raw Strength": ["Strong Grip", "Workhorse", "Second Level", "Inside Shield", "Ground N Pound"],
+    "Well Rounded": ["Pocket Shield", "Outside Shield", "Strong Grip", "Option Shield", "Inside Shield"]
+  },
+  "RG": {
     "Agile": ["Screen Enforcer", "Quick Step", "Option Shield", "Outside Shield", "Quick Drop"],
     "Pass Protector": ["Pocket Shield", "Quick Drop", "PA Shield", "Strong Grip", "Wear Down"],
     "Raw Strength": ["Strong Grip", "Workhorse", "Second Level", "Inside Shield", "Ground N Pound"],
@@ -51,7 +63,13 @@
     "Raw Strength": ["Strong Grip", "Workhorse", "Second Level", "Inside Shield", "Ground N Pound"],
     "Well Rounded": ["Pocket Shield", "Outside Shield", "Strong Grip", "Option Shield", "Inside Shield"]
   },
-  "DE": {
+  "LEDG": {
+    "Edge Setter": ["Grip Breaker", "Inside Disruptor", "Outside Disruptor", "Option Disruptor", "Workhorse"],
+    "Power Rusher": ["Pocket Disruptor", "Duress", "Grip Breaker", "Workhorse", "Take Down"],
+    "Pure Power": ["Grip Breaker", "Pocket Disruptor", "Inside Disruptor", "Workhorse", "Hammer"],
+    "Speed Rusher": ["Quick Jump", "Duress", "Take Down", "Pocket Disruptor", "Recoup"]
+  },
+  "REDG": {
     "Edge Setter": ["Grip Breaker", "Inside Disruptor", "Outside Disruptor", "Option Disruptor", "Workhorse"],
     "Power Rusher": ["Pocket Disruptor", "Duress", "Grip Breaker", "Workhorse", "Take Down"],
     "Pure Power": ["Grip Breaker", "Pocket Disruptor", "Inside Disruptor", "Workhorse", "Hammer"],
@@ -63,12 +81,17 @@
     "Pure Power": ["Grip Breaker", "Pocket Disruptor", "Inside Disruptor", "Workhorse", "Hammer"],
     "Speed Rusher": ["Quick Jump", "Duress", "Take Down", "Pocket Disruptor", "Recoup"]
   },
-  "OLB": {
+  "WILL": {
     "Lurker": ["House Call", "Knockout", "Bouncer", "Robber", "Wrap Up"],
     "Signal Caller": ["Take Down", "Workhorse", "Blow Up", "Wrap Up", "Hammer"],
     "Thumper": ["Grip Breaker", "Wrap Up", "Aftershock", "Blow Up", "Hammer"]
   },
-  "MLB": {
+  "SAM": {
+    "Lurker": ["House Call", "Knockout", "Bouncer", "Robber", "Wrap Up"],
+    "Signal Caller": ["Take Down", "Workhorse", "Blow Up", "Wrap Up", "Hammer"],
+    "Thumper": ["Grip Breaker", "Wrap Up", "Aftershock", "Blow Up", "Hammer"]
+  },
+  "MIKE": {
     "Lurker": ["House Call", "Knockout", "Bouncer", "Robber", "Wrap Up"],
     "Signal Caller": ["Take Down", "Workhorse", "Blow Up", "Wrap Up", "Hammer"],
     "Thumper": ["Grip Breaker", "Wrap Up", "Aftershock", "Blow Up", "Hammer"]

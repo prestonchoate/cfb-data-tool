@@ -88,12 +88,20 @@ def get_star_rating(
         hits = list(zip(xs.tolist(), ys.tolist()))
         groups = _deduplicate_star_matches(hits, min_distance=template.shape[1] // 2)
         star_count = len(groups)
+        if groups:
+            peak_scores = []
+            for grp in groups:
+                peak_scores.append(max(float(match_result[y, x]) for x, y in grp))
+            conf = sum(peak_scores) / len(peak_scores)
+        else:
+            conf = 0.0
     else:
         _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         star_count = sum(1 for c in contours if 50 < cv2.contourArea(c) < 500)
+        conf = 0.5  # contour fallback has no match score
 
-    return min(star_count, 5)
+    return min(star_count, 5), round(conf, 3)
 
 
 def detect_ability_level(icon_img: np.ndarray) -> str:
@@ -143,8 +151,12 @@ def detect_gem_status(roi_img: np.ndarray) -> str:
         cv2.inRange(hsv, np.array([170, 50, 50]), np.array([180, 255, 255])),
     )
 
-    if cv2.countNonZero(green_mask) > 100:
-        return "GEM"
-    if cv2.countNonZero(red_mask) > 100:
-        return "BUST"
-    return "NORMAL"
+    total_pixels = max(1, roi_img.shape[0] * roi_img.shape[1])
+    green_count = cv2.countNonZero(green_mask)
+    red_count = cv2.countNonZero(red_mask)
+
+    if green_count > 100:
+        return "GEM", round(min(green_count / total_pixels * 5, 1.0), 3)
+    if red_count > 100:
+        return "BUST", round(min(red_count / total_pixels * 5, 1.0), 3)
+    return "NORMAL", 1.0

@@ -54,18 +54,21 @@ MENTAL_HEADERS = [
 ]
 
 MENTAL_NAMES = [
-    "Best Friend", "Clear Headed", "Clutch Kicker", "Defensive Rally",
-    "Fan Favorite", "Field General", "Hot Head", "Headstrong",
-    "Legion", "Offensive Rally", "Road Dog", "Team Player",
-    "The Natural", "Winning Time",
+    "Adrenaline", "Best Friend", "Clear Headed", "Clutch Kicker",
+    "Defensive Rally", "Fan Favorite", "Field General", "Headstrong",
+    "Instinct", "Legion", "Offensive Rally", "Road Dog",
+    "Rollercoaster", "Team Player", "The Natural", "Winning Time",
 ]
 
 POSITION_ATTRIBUTE_COUNT = {
     "QB": 10, "HB": 10, "FB": 10, "WR": 10, "TE": 10,
-    "OT": 10, "OG": 10, "C": 10, "DT": 10, "DE": 10,
-    "OLB": 10, "MLB": 10, "CB": 10, "SS": 10, "FS": 10,
+    "LT": 10, "RT": 10, "LG": 10, "RG": 10, "C": 10,
+    "DT": 10, "LEDG": 10, "REDG": 10, "WILL": 10, "SAM": 10, "MIKE": 10,
+    "CB": 10, "SS": 10, "FS": 10,
     "K": 10, "P": 10, "ATH": 10,
 }
+
+POSITIONS = list(POSITION_ATTRIBUTE_COUNT.keys())
 
 # Fields that must be present & non-error for a scan to count as valid
 # (mirrors the original test_accuracy.py pass criteria).
@@ -293,11 +296,13 @@ def extract_attributes(ocr, img, rois):
 
 
 def extract_star_rating(img, rois, scale: float = 1.0):
-    return processor.get_star_rating(_crop(img, rois["star_rating"]), scale=scale)
+    count, conf = processor.get_star_rating(_crop(img, rois["star_rating"]), scale=scale)
+    return count, conf
 
 
 def extract_gem_status(img, rois):
-    return processor.detect_gem_status(_crop(img, rois["gem_icon"]))
+    status, conf = processor.detect_gem_status(_crop(img, rois["gem_icon"]))
+    return status, conf
 
 
 _ABILITIES_TABLE = None
@@ -314,6 +319,21 @@ def _load_abilities_table():
 def _get_expected_abilities(position: str, archetype: str) -> list[str]:
     table = _load_abilities_table()
     return table.get(position, {}).get(archetype, [])
+
+
+def get_position_archetypes(position: str) -> list[str]:
+    """All known archetypes for *position*, sorted alphabetically.
+
+    ATH (or any position absent from the table) returns the union of all
+    archetypes across every position, since an ATH recruit can play anywhere.
+    """
+    table = _load_abilities_table()
+    if position in table:
+        return sorted(table[position].keys())
+    all_archetypes: set[str] = set()
+    for archetypes in table.values():
+        all_archetypes.update(archetypes.keys())
+    return sorted(all_archetypes)
 
 
 def _fuzzy_match_ability(ocr_text: str, expected: list[str]) -> str:
@@ -449,13 +469,15 @@ class RecruitsProfile(ScrapeProfile):
         mentals, conf["mentals"] = extract_mentals(ocr, img, rois)
         attributes, conf["attributes"] = extract_attributes(ocr, img, rois)
         dev_trait, conf["DEV TRAIT"] = extract_dev_trait(ocr, img, rois)
+        stars, conf["STARS"] = extract_star_rating(img, rois, scale=scale)
+        gem, conf["GEM"] = extract_gem_status(img, rois)
 
         return {
             "NAME": name,
             "POSITION": position,
             "ARCHETYPE": archetype,
-            "STARS": extract_star_rating(img, rois, scale=scale),
-            "GEM": extract_gem_status(img, rois),
+            "STARS": stars,
+            "GEM": gem,
             "HEIGHT": height,
             "WEIGHT": weight,
             "CLASS": recruit_class,
