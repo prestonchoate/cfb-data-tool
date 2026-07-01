@@ -10,6 +10,9 @@ if (-not (Test-Path $py)) {
     exit 1
 }
 
+Write-Host "==> Generating platform icons..."
+& .\.venv\Scripts\python.exe packaging\gen_icons.py
+
 Write-Host "==> Building app bundle with PyInstaller..."
 & $py --noconfirm --clean packaging\cfbdatatool.spec
 Write-Host "==> Bundle ready: dist\CFBDataTool\CFBDataTool.exe"

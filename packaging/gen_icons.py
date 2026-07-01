@@ -33,5 +33,5 @@ ico_sizes = [16, 32, 48, 64, 128, 256]
 ico_images = [img.resize((s, s), Image.LANCZOS) for s in ico_sizes]
 
 ico_path = OUT_DIR / "icon.ico"
-ico_images[0].save(ico_path, format="ICO", sizes=[(s, s) for s in ico_sizes], append_images=ico_images[1:])
+img.save(ico_path, format="ICO", sizes=[(s, s) for s in ico_sizes], append_images=ico_images[1:])
 print(f"Created {ico_path}")
