@@ -72,16 +72,9 @@ class PortalDBusSession:
             (session_handle, "", {}),
             sender,
         )
-        streams = start_results.get("streams", [])
-        if not streams:
-            raise PortalDBusError("Start returned no streams")
-
-        stream = streams[0]
-        node_id = int(stream[0])
-        stream_opts = stream[1] if len(stream) > 1 else {}
-        size = stream_opts.get("size", (0, 0))
-        width = int(size[0]) if size and size[0] else 0
-        height = int(size[1]) if size and size[1] else 0
+        node_id, stream_opts = _parse_first_stream(start_results.get("streams"))
+        size = _parse_size(stream_opts)
+        width, height = size
 
         portal = DBusAddress(
             PORTAL_PATH,
@@ -90,9 +83,7 @@ class PortalDBusSession:
         )
         pw_msg = new_method_call(portal, "OpenPipeWireRemote", "oa{sv}", (session_handle, {}))
         pw_reply = conn.send_and_get_reply(pw_msg)
-        if not pw_reply.unix_fds:
-            raise PortalDBusError("OpenPipeWireRemote returned no file descriptor")
-        fd = pw_reply.unix_fds[0]
+        fd = _extract_pipewire_fd(pw_reply)
 
         return PortalStreamInfo(
             fd=fd,
@@ -123,14 +114,142 @@ def _require_jeepney():
     return DBusAddress, MatchRule, new_method_call, open_dbus_connection
 
 
+def _extract_pipewire_fd(reply: Any) -> int:
+    """Return the PipeWire socket fd from an OpenPipeWireRemote reply."""
+    if not reply.body:
+        raise PortalDBusError("OpenPipeWireRemote returned no file descriptor")
+    fd_obj = reply.body[0]
+    if hasattr(fd_obj, "to_raw_fd"):
+        return int(fd_obj.to_raw_fd())
+    if hasattr(fd_obj, "fileno"):
+        return int(fd_obj.fileno())
+    if isinstance(fd_obj, int):
+        return fd_obj
+    raise PortalDBusError(f"OpenPipeWireRemote returned unexpected fd type: {type(fd_obj)!r}")
+
+
 def _unwrap(value: Any) -> Any:
-    if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str) and len(value[0]) == 1:
-        return _unwrap(value[1])
+    if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str):
+        sig, payload = value
+        # D-Bus variant or typed value: (signature, payload)
+        if len(sig) == 1 or sig.startswith(("a", "(")):
+            return _unwrap(payload)
     if isinstance(value, dict):
         return {k: _unwrap(v) for k, v in value.items()}
     if isinstance(value, list):
         return [_unwrap(v) for v in value]
     return value
+
+
+def _as_int(value: Any) -> int | None:
+    value = _unwrap(value)
+    if isinstance(value, int):
+        return value
+    return None
+
+
+def _as_dict(value: Any) -> dict:
+    value = _unwrap(value)
+    return value if isinstance(value, dict) else {}
+
+
+def _parse_size(props: dict) -> tuple[int, int]:
+    size = _unwrap(props.get("size", (0, 0)))
+    if isinstance(size, (list, tuple)) and len(size) >= 2:
+        w = _as_int(size[0])
+        h = _as_int(size[1])
+        return (w or 0, h or 0)
+    return 0, 0
+
+
+def _parse_stream_entry(entry: Any, siblings: list[Any] | None = None) -> tuple[int, dict]:
+    entry = _unwrap(entry)
+
+    if isinstance(entry, dict):
+        props = entry
+        if siblings:
+            for sibling in siblings:
+                sibling = _unwrap(sibling)
+                if isinstance(sibling, int):
+                    return sibling, props
+                if isinstance(sibling, tuple) and len(sibling) == 2 and sibling[0] == "u":
+                    node_id = _as_int(sibling[1])
+                    if node_id is not None:
+                        return node_id, props
+        for key in ("pipewire-node", "node_id", "handle"):
+            if key in props:
+                node_id = _as_int(props[key])
+                if node_id is not None:
+                    return node_id, props
+
+    if isinstance(entry, (list, tuple)):
+        if len(entry) >= 2 and not isinstance(entry[0], str):
+            node_id = _as_int(entry[0])
+            if node_id is not None:
+                return node_id, _as_dict(entry[1])
+
+        # Flat variant struct: [('u', id), ('a', props)] or [('a', props), ('u', id)]
+        node_id = None
+        props: dict = {}
+        for item in entry:
+            item = _unwrap(item)
+            if isinstance(item, int):
+                node_id = item
+            elif isinstance(item, dict):
+                props = item
+            elif isinstance(item, tuple) and len(item) == 2:
+                tag, payload = item
+                if tag == "u":
+                    node_id = _as_int(payload)
+                elif tag == "a" and isinstance(_unwrap(payload), dict):
+                    props = _as_dict(payload)
+        if node_id is not None:
+            return node_id, props
+
+        # Properties-only variant: ('a', {...})
+        if len(entry) == 2 and entry[0] == "a":
+            props = _as_dict(entry[1])
+            if siblings:
+                for sibling in siblings:
+                    sibling = _unwrap(sibling)
+                    if isinstance(sibling, tuple) and len(sibling) == 2 and sibling[0] == "u":
+                        node_id = _as_int(sibling[1])
+                        if node_id is not None:
+                            return node_id, props
+            for key in ("pipewire-node", "node_id", "handle"):
+                if key in props:
+                    node_id = _as_int(props[key])
+                    if node_id is not None:
+                        return node_id, props
+
+    if isinstance(entry, int):
+        return entry, {}
+
+    raise PortalDBusError(f"Unrecognized stream entry: {entry!r}")
+
+
+def _parse_first_stream(raw: Any) -> tuple[int, dict]:
+    streams = _unwrap(raw)
+    while isinstance(streams, tuple) and len(streams) == 2 and isinstance(streams[0], str):
+        if streams[0].startswith("a"):
+            streams = streams[1]
+        else:
+            break
+    streams = _unwrap(streams)
+
+    if isinstance(streams, tuple) and len(streams) == 2 and isinstance(streams[0], int):
+        streams = [streams]
+
+    if not isinstance(streams, list) or not streams:
+        raise PortalDBusError(f"Start returned no streams: {raw!r}")
+
+    # Some compositors flatten one stream into the top-level list.
+    if len(streams) >= 2 and all(isinstance(_unwrap(item), tuple) for item in streams[:2]):
+        tags = [_unwrap(item)[0] for item in streams[:2] if isinstance(_unwrap(item), tuple)]
+        if tags == ["a", "u"] or tags == ["u", "a"]:
+            return _parse_stream_entry(streams)
+
+    return _parse_stream_entry(streams[0], siblings=streams[1:])
 
 
 def _variant_dict(data: dict[str, Any]) -> dict:

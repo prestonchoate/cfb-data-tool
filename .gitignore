@@ -19,6 +19,11 @@ MANIFEST
 packaging/icon.icns
 packaging/icon.ico
 
+# Linux packaging (packaging/build_linux.sh)
+packaging/tools/
+dist/CFBDataTool.AppDir/
+dist/*.AppImage
+
 # Virtual environments
 .venv/
 venv/
