@@ -22,7 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 linux = ["jeepney>=0.8", "pipewire-capture>=0.2.9"]
-dev = ["pytest", "pyinstaller", "pillow", "jeepney>=0.8", "pipewire-capture>=0.2.9"]
+dev = ["pytest", "pyinstaller", "pillow"]
 
 [project.scripts]
 cfb-data-tool = "app.main:main"
