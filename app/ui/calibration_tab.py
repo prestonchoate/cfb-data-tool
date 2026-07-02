@@ -18,7 +18,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-    QListWidget, QPushButton, QSpinBox, QVBoxLayout, QWidget,
+    QListWidget, QMessageBox, QPushButton, QSpinBox, QVBoxLayout, QWidget,
 )
 
 from ..core import capture
@@ -173,12 +173,23 @@ class CalibrationTab(QWidget):
         self.reset_btn.setVisible(False)
         go = self.calib["global_offsets"]
         self._area_ref = (go["width"], go["height"])
-        try:
-            frame = capture.grab_region(capture.monitor_region(self.settings.monitor_number))
-            note = "Drag the box over the recruit card, then Save. Resize if the card differs."
-        except Exception as exc:  # noqa: BLE001
+        if capture.needs_session() and not capture.ensure_session(self.settings.monitor_number):
+            QMessageBox.warning(
+                self,
+                "Screen capture permission required",
+                "Monitor capture needs permission to record your screen.\n\n"
+                "Approve the desktop portal dialog and select the game monitor, "
+                "or load a screenshot instead.",
+            )
             frame = np.full((1080, 1920, 3), 30, dtype=np.uint8)
-            note = f"Full-monitor capture failed ({exc}). Enter the region by hand below."
+            note = "Live monitor capture unavailable. Load a screenshot or grant portal permission."
+        else:
+            try:
+                frame = capture.grab_region(capture.monitor_region(self.settings.monitor_number))
+                note = "Drag the box over the recruit card, then Save. Resize if the card differs."
+            except Exception as exc:  # noqa: BLE001
+                frame = np.full((1080, 1920, 3), 30, dtype=np.uint8)
+                note = f"Full-monitor capture failed ({exc}). Enter the region by hand below."
         self.bg_image = frame
         self.canvas.set_background(bgr_to_qpixmap(frame))
         self.canvas.set_rois({_GAME_AREA: (go["top"], go["height"], go["left"], go["width"])})
@@ -237,6 +248,14 @@ class CalibrationTab(QWidget):
 
     # ---- background sources ---------------------------------------------
     def _capture_region(self):
+        if capture.needs_session() and not capture.ensure_session(self.settings.monitor_number):
+            QMessageBox.warning(
+                self,
+                "Screen capture permission required",
+                "Monitor capture needs permission to record your screen.\n\n"
+                "Approve the desktop portal dialog and select the game monitor.",
+            )
+            return
         try:
             if self.mode == "area":
                 region = capture.monitor_region(self.settings.monitor_number)

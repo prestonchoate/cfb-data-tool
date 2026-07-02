@@ -21,7 +21,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pyinstaller", "pillow"]
+linux = ["jeepney>=0.8", "pipewire-capture>=0.2.9"]
+dev = ["pytest", "pyinstaller", "pillow", "jeepney>=0.8", "pipewire-capture>=0.2.9"]
 
 [project.scripts]
 cfb-data-tool = "app.main:main"
@@ -30,4 +31,4 @@ cfb-data-tool = "app.main:main"
 include = ["app*"]
 
 [tool.setuptools.package-data]
-app = ["resources/*", "config/presets/**/*.json"]
+app = ["resources/*", "resources/sounds/*", "config/presets/**/*.json"]

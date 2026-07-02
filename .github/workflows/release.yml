@@ -84,9 +84,41 @@ jobs:
           name: macos-app
           path: dist/CFBDataTool-macOS.zip
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libxkbcommon0 libglib2.0-0 libdbus-1-3 \
+            fuse libfuse2 squashfs-tools
+
+      - name: Install dependencies
+        run: pip install -e .[dev,linux]
+
+      - name: Build AppImage
+        run: bash packaging/build_linux.sh
+
+      - name: Smoke test
+        run: |
+          QT_QPA_PLATFORM=offscreen CFB_SMOKE=1 ./dist/CFBDataTool-$(uname -m).AppImage
+          cat dist/CFBDataTool/smoke_result.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: dist/CFBDataTool-*.AppImage
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -99,6 +131,11 @@ jobs:
           name: macos-app
           path: artifacts/
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-appimage
+          path: artifacts/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -106,3 +143,4 @@ jobs:
           files: |
             artifacts/CFBDataTool-Setup.exe
             artifacts/CFBDataTool-macOS.zip
+            artifacts/CFBDataTool-*.AppImage

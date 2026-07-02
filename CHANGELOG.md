@@ -2,6 +2,22 @@
 
 All notable changes to CFB Data Tool are documented here.
 
+## [Unreleased]
+
+### Added
+
+- **Linux desktop support (Wayland-first)** — new `app/platform/` layer with pluggable capture, hotkey, and sound backends. Wayland live capture uses xdg-desktop-portal monitor screencast (PipeWire) with client-side ROI cropping; Windows and macOS continue using `mss`.
+- **Linux AppImage packaging** — `packaging/build_linux.sh` produces a portable AppImage with Qt Wayland/XCB platform plugins bundled.
+- **Linux sound playback** — `paplay`/`aplay` with freedesktop sound theme discovery and bundled fallback `.wav` files.
+- **CI and release** — `ubuntu-latest` smoke tests; Linux AppImage attached to GitHub Releases alongside Windows and macOS artifacts.
+
+### Changed
+
+- `app/core/capture.py` and `app/core/sound.py` are now thin facades over platform backends.
+- macOS dark theme setup moved to `app/platform/ui_theme.py`.
+
+---
+
 ## [0.1.3] — 2026-06-29
 
 ### Added

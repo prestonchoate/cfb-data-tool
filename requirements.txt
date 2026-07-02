@@ -13,3 +13,7 @@ platformdirs
 
 # --- UI (Phase 2+) ---
 PySide6
+
+# --- Linux Wayland (optional) ---
+# jeepney>=0.8
+# pipewire-capture>=0.2.9

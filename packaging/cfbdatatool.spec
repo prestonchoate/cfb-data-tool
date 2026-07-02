@@ -4,6 +4,7 @@
 # Output:
 #   Windows: dist/CFBDataTool/CFBDataTool.exe  (one-folder)
 #   macOS:   dist/CFBDataTool.app              (.app bundle)
+#   Linux:   dist/CFBDataTool/CFBDataTool       (one-folder, for AppImage)
 import os
 import sys
 
@@ -11,6 +12,7 @@ from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_sub
 
 ROOT = os.path.dirname(SPECPATH)  # repo root (SPECPATH = packaging/)
 IS_MAC = sys.platform == "darwin"
+IS_LINUX = sys.platform.startswith("linux")
 
 datas, binaries, hiddenimports = [], [], []
 
@@ -21,11 +23,34 @@ for pkg in ("rapidocr_onnxruntime", "onnxruntime"):
     binaries += b
     hiddenimports += h
 
-# App data: ROI presets (JSON), star template (PNG), any stylesheets.
-datas += collect_data_files("app", includes=["**/*.json", "**/*.png", "**/*.qss"])
+# App data: ROI presets (JSON), star template (PNG), bundled sounds, stylesheets.
+datas += collect_data_files("app", includes=["**/*.json", "**/*.png", "**/*.qss", "**/*.wav"])
 
 # Ensure every app submodule is bundled — incl. the profile that self-registers.
 hiddenimports += collect_submodules("app")
+
+if IS_LINUX:
+    for pkg in ("jeepney", "pipewire_capture"):
+        d, b, h = collect_all(pkg)
+        datas += d
+        binaries += b
+        hiddenimports += h
+
+    import PySide6
+
+    pyside_dir = os.path.dirname(PySide6.__file__)
+    for candidate in (
+        os.path.join(pyside_dir, "Qt", "plugins"),
+        os.path.join(pyside_dir, "plugins"),
+    ):
+        if os.path.isdir(candidate):
+            for root, _, files in os.walk(candidate):
+                for fname in files:
+                    if fname.endswith(".so"):
+                        src = os.path.join(root, fname)
+                        rel = os.path.relpath(root, pyside_dir)
+                        binaries.append((src, rel))
+            break
 
 a = Analysis(
     [os.path.join(SPECPATH, "launch.py")],
@@ -76,6 +101,12 @@ if IS_MAC:
         },
     )
 else:
+    icon = None
+    if IS_LINUX:
+        icon = os.path.join(ROOT, "app", "resources", "icon.png")
+    else:
+        icon = os.path.join(SPECPATH, "icon.ico")
+
     exe = EXE(
         pyz,
         a.scripts,
@@ -87,7 +118,7 @@ else:
         strip=False,
         upx=False,
         console=console,
-        icon=os.path.join(SPECPATH, "icon.ico"),
+        icon=icon,
     )
     coll = COLLECT(
         exe,

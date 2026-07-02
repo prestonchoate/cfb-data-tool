@@ -24,6 +24,18 @@ A friendly guide to capturing recruit data from College Football. No terminal, n
 
 The first launch takes a few seconds while the text-recognition engine loads.
 
+### Linux (AppImage)
+
+1. Download **`CFBDataTool-<arch>.AppImage`** from the [Releases page](https://github.com/patches822/cfb-data-tool/releases).
+2. Make it executable: `chmod +x CFBDataTool-x86_64.AppImage`
+3. Run it: `./CFBDataTool-x86_64.AppImage`
+
+> **Wayland note:** The first time you click **Start Live** or **Re-capture Full Monitor**, your desktop will ask for permission to share a monitor. Pick the screen where the game is running. This permission lasts for the session.
+>
+> **Hotkey note:** Global hotkeys may not work on Wayland. Use the on-screen **Scan** button if your hotkey does not respond.
+
+The first launch takes a few seconds while the text-recognition engine loads.
+
 ---
 
 ## 2. Tell it where the game is (one-time calibration)

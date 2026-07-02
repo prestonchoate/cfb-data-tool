@@ -1,0 +1,26 @@
+#!/bin/sh
+# AppImage entry point for CFB Data Tool.
+HERE="$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")"
+BIN="${HERE}/usr/bin"
+
+export PATH="${BIN}:${PATH}"
+export LD_LIBRARY_PATH="${BIN}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+for plugin_root in \
+    "${BIN}/PySide6/Qt/plugins" \
+    "${BIN}/PySide6/plugins" \
+    "${BIN}/_internal/PySide6/Qt/plugins" \
+    "${BIN}/_internal/PySide6/plugins"
+do
+    if [ -d "${plugin_root}/platforms" ]; then
+        export QT_PLUGIN_PATH="${plugin_root}"
+        export QT_QPA_PLATFORM_PLUGIN_PATH="${plugin_root}/platforms"
+        break
+    fi
+done
+
+if [ -z "${QT_QPA_PLATFORM:-}" ]; then
+    export QT_QPA_PLATFORM="wayland;xcb"
+fi
+
+exec "${BIN}/CFBDataTool" "$@"

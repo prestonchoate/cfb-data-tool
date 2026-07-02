@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=CFB Data Tool
+Comment=Capture College Football recruit data from your screen
+Exec=CFBDataTool
+Icon=cfb-data-tool
+Categories=Game;Utility;
+Terminal=false
+StartupWMClass=CFBDataTool

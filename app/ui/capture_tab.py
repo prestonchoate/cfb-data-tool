@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import (
     QCheckBox, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QListWidget,
-    QPushButton, QVBoxLayout, QWidget,
+    QMessageBox, QPushButton, QVBoxLayout, QWidget,
 )
 
 import cv2
@@ -195,6 +195,16 @@ class CaptureTab(QWidget):
 
     def _toggle_live(self, on: bool):
         if on:
+            if capture.needs_session() and not capture.ensure_session(self.settings.monitor_number):
+                self.live_btn.setChecked(False)
+                QMessageBox.warning(
+                    self,
+                    "Screen capture permission required",
+                    "Live capture needs permission to record your monitor.\n\n"
+                    "Use the desktop portal dialog to select the monitor running "
+                    "the game, or use Load Image… to scan saved screenshots instead.",
+                )
+                return
             self.live_btn.setText("⏸ Stop Live")
             if self._viewing_snapshot:
                 self._live_was_on = True
@@ -203,6 +213,8 @@ class CaptureTab(QWidget):
         else:
             self.live_btn.setText("▶ Start Live")
             self._timer.stop()
+            if capture.needs_session():
+                capture.close_session()
             if self._viewing_snapshot:
                 self._live_was_on = False
 
@@ -498,6 +510,7 @@ class CaptureTab(QWidget):
     # ---- Lifecycle -------------------------------------------------------
     def shutdown(self):
         self._timer.stop()
+        capture.close_session()
         self.hotkey.stop()
         self._queue_snapshots.clear()
         self._pending_snapshot = None

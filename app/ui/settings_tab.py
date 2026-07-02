@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget,
 )
 
+from ..platform.detect import desktop_target
 from .widgets.hotkey_edit import HotkeyEdit
 from .widgets.sound_picker import SoundPicker
 
@@ -75,6 +76,15 @@ class SettingsTab(QWidget):
         self.note = QLabel("")
         self.note.setStyleSheet("color:#2e7d32;")
         root.addWidget(self.note)
+
+        if desktop_target() == "linux_wayland":
+            linux_note = QLabel(
+                "Linux (Wayland): live capture requires a one-time portal permission per "
+                "session. Global hotkeys may be unavailable — use the Scan button.")
+            linux_note.setWordWrap(True)
+            linux_note.setStyleSheet("color:#666;")
+            root.addWidget(linux_note)
+
         root.addStretch(1)
 
     def _browse_csv(self):
